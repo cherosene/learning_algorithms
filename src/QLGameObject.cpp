@@ -30,3 +30,6 @@ void QLGameObject<T,U>::rinitQlTable(float range)
         it->second = r;
     }
 }
+
+template <class T, class U>
+void QLGameObject<T,U>::setQlParameters(float lr, float df) { learningRate = lr; discountFactor = df; }
