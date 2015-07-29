@@ -33,6 +33,8 @@ public:
     void rinitQlTable(float range = 1.);
     // set the parameters for the qlearning algorithm (https://en.wikipedia.org/wiki/Q-learning)
     void setQlParameters(float lr, float df);
+    // update qlTable and set new state
+    void qlUpdate(U ns, float reward = 0.);
 };
 
 #endif // QLGAMEOBJECT_H
