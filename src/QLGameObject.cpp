@@ -14,6 +14,15 @@ QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vect
     }
 }
 
+
+template<class T,class U>
+void QLGameObject<T,U>::doAction(T act)
+{
+    GameObject<T>::doAction(act);
+    lastAction = act;
+}
+
+
 template <class T, class U>
 void QLGameObject<T,U>::rinitQlTable(float range)
 {
