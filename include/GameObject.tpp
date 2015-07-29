@@ -1,5 +1,3 @@
-#include "GameObject.h"
-
 template <class T>
 GameObject<T>::GameObject(std::map<T,std::function<void()>> atm, int nx, int ny, float nspeed) : x(nx), y(ny), speed(nspeed), actionToMove(atm) {}
 

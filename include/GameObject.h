@@ -37,4 +37,7 @@ public:
     std::vector<T> validActions();
 };
 
+
+#include "GameObject.tpp"
+
 #endif // GAMEOBJECT_H

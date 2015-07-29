@@ -1,11 +1,9 @@
 #include <cstdlib>
 
-#include "QLGameObject.h"
-
 template <class T, class U>
 QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed)
 {
-    for(typename std::map<T,std::function<void()>>::iterator amit = this->actionToMove.beign(); amit != this->actionToMove.end(); amit++ )
+    for(typename std::map<T,std::function<void()>>::iterator amit = this->actionToMove.begin(); amit != this->actionToMove.end(); amit++ )
     {
         for(typename std::vector<U>::iterator sit = nstates.begin(); sit != nstates.end(); sit++ )
         {
@@ -58,17 +56,18 @@ void QLGameObject<T,U>::rinitQlTable(float range)
 template <class T, class U>
 void QLGameObject<T,U>::setQlParameters(float lr, float df) { learningRate = lr; discountFactor = df; }
 
+
 template <class T, class U>
 T QLGameObject<T,U>::chooseAction()
 {
-    T result;
     std::vector<T> va = this->validActions();
-    float ofv = qlTable[std::pair<T,U>(va[0],this->currentState)];
+    T result = va[0];
+    float ofv = qlTable[std::pair<T,U>(va[0],this->lastState)];
     float tmpValue;
     
     for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++)
     {
-        tmpValue = qlTable[std::pair<T,U>(*it,this->currentState)];
+        tmpValue = qlTable[std::pair<T,U>(*it,this->lastState)];
         if(tmpValue > ofv) {
             ofv = tmpValue;
             result = *it;
@@ -84,7 +83,7 @@ void QLGameObject<T,U>::qlUpdate(U ns, float reward)
     
     std::vector<T> va = this->validActions();
     float ofv = qlTable[std::pair<T,U>(va[0],ns)];
-    for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++) { ofv = max(ofv,qlTable[std::pair<T,U>(*it,ns)]); }
+    for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++) { ofv = std::max(ofv,qlTable[std::pair<T,U>(*it,ns)]); }
     
     qlTable[lastAS] += learningRate * ( reward + discountFactor *  ofv - qlTable[lastAS] );
     lastState = ns;
