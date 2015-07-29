@@ -30,6 +30,12 @@ void QLGameObject<T,U>::doAction(T act)
     }
 }
 
+template<class T, class U>
+void QLGameObject<T,U>::doAction()
+{
+    doAction(chooseAction());
+}
+
 
 
 template <class T, class U>
@@ -51,6 +57,25 @@ void QLGameObject<T,U>::rinitQlTable(float range)
 
 template <class T, class U>
 void QLGameObject<T,U>::setQlParameters(float lr, float df) { learningRate = lr; discountFactor = df; }
+
+template <class T, class U>
+T QLGameObject<T,U>::chooseAction()
+{
+    T result;
+    std::vector<T> va = this->validActions();
+    float ofv = qlTable[std::pair<T,U>(va[0],this->currentState)];
+    float tmpValue;
+    
+    for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++)
+    {
+        tmpValue = qlTable[std::pair<T,U>(*it,this->currentState)];
+        if(tmpValue > ofv) {
+            ofv = tmpValue;
+            result = *it;
+        }
+    }
+    return result;
+}
 
 template <class T, class U>
 void QLGameObject<T,U>::qlUpdate(U ns, float reward)
