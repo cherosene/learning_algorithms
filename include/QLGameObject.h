@@ -15,6 +15,7 @@ public:
     // the table for the Qlearning algorithm
     std::map< std::pair<T,U>, float > qlTable;
 private:
+    bool isQlTableUpToDate = true;
     // parameters for the Qlearning algorithm
     float learningRate = 0.1;
     float discountFactor = 0;

@@ -18,8 +18,16 @@ QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vect
 template<class T, class U>
 void QLGameObject<T,U>::doAction(T act)
 {
-    GameObject<T>::doAction(act);
-    lastAction = act;
+    if(isQlTableUpToDate)
+    {
+        GameObject<T>::doAction(act);
+        lastAction = act;
+        isQlTableUpToDate = false;
+    }
+    else
+    {
+        // FIXME: throw exception
+    }
 }
 
 
@@ -49,10 +57,11 @@ void QLGameObject<T,U>::qlUpdate(U ns, float reward)
 {
     std::pair<T,U> lastAS = std::pair<T,U>(lastAction,lastState);
     
-    std::vector<T> va = validActions();
-    float ofv = qlTable[std::pair<T,U>(validActions[0],ns)];
+    std::vector<T> va = this->validActions();
+    float ofv = qlTable[std::pair<T,U>(va[0],ns)];
     for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++) { ofv = max(ofv,qlTable[std::pair<T,U>(*it,ns)]); }
     
     qlTable[lastAS] += learningRate * ( reward + discountFactor *  ofv - qlTable[lastAS] );
     lastState = ns;
+    isQlTableUpToDate = true;
 }
