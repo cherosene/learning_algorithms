@@ -1,5 +1,6 @@
 CC = g++
 INCLUDEDIR = include
+EXAMPLEDIR = examples
 SRCDIR = src
 CFLAGS = -Wall -pedantic -std=c++11 -I$(INCLUDEDIR) -c
 LFLAGS = -Wall -pedantic -std=c++11 -I$(INCLUDEDIR)
@@ -22,9 +23,8 @@ test:
 	#$(MAKE) compile
 	$(CC) $(LFLAGS) $(TEST) -o $(TEST_EXE)
 	
-rps: rps.cpp
-	#$(MAKE) compile
-	$(CC) $(LFLAGS) rps.cpp -o rps
+rps:
+	$(CC) $(LFLAGS) $(EXAMPLEDIR)/rps.cpp -o rps
 	$(MAKE) almostclean
 	
 almostclean:

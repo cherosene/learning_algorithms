@@ -37,9 +37,10 @@ void GameObject<T>::doAction(T act)
     {
         // FIXME: raise an exception when the move is not valid
     }
+    
     else
     {
-        if( it->second )
+        if( it->second != NULL )
         {
             (it->second)();
         }

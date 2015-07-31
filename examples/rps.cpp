@@ -10,48 +10,60 @@ char evaluateMatch(Action pa, Action ea)
 {
     switch(pa)
     {
+    case ROCK:
+        switch(ea)
+        {
         case ROCK:
-            switch(ea)
-            {
-                case ROCK:
-                    return 'D';
-                    break;
-                case PAPER:
-                    return 'E';
-                    break;
-                case SCISSOR:
-                    return 'P';
-                    break;
-            }
-            break;
+            return 'D';
+        break;
         case PAPER:
-            switch(ea)
-            {
-                case ROCK:
-                    return 'P';
-                    break;
-                case PAPER:
-                    return 'D';
-                    break;
-                case SCISSOR:
-                    return 'E';
-                    break;
-            }
-            break;
+            return 'E';
+        break;
         case SCISSOR:
-            switch(ea)
-            {
-                case ROCK:
-                    return 'E';
-                    break;
-                case PAPER:
-                    return 'P';
-                    break;
-                case SCISSOR:
-                    return 'D';
-                    break;
-            }
-            break;
+            return 'P';
+        break;
+        default:
+        // FIXME: throw an exception
+        break;
+        }
+    break;
+    case PAPER:
+        switch(ea)
+        {
+        case ROCK:
+            return 'P';
+        break;
+        case PAPER:
+            return 'D';
+        break;
+        case SCISSOR:
+            return 'E';
+        break;
+        default:
+        // FIXME: throw an exception
+        break;
+        }
+    break;
+    case SCISSOR:
+        switch(ea)
+        {
+        case ROCK:
+            return 'E';
+        break;
+        case PAPER:
+            return 'P';
+        break;
+        case SCISSOR:
+            return 'D';
+        break;
+        default:
+        // FIXME: throw an exception
+        break;
+        }
+    break;
+    default:
+    // FIXME: throw an exception
+    break;
     }
     return 'H';
 }
@@ -69,18 +81,11 @@ int main (int argc, char const* argv[])
     // player setup
     std::map<Action,std::function<void()>> atm;
     for(int i = 0; i < ACTION_NUM; ++i)
-        atm[static_cast<Action>(i)] = [&](){playerAction = static_cast<Action>(i);};
-    
-    // debug
-    for(std::map<Action,std::function<void()>>::iterator it = atm.begin(); it != atm.end(); it++)
-    {
-        std::cout << it->first << std::endl;
-    }
-    
+        atm[static_cast<Action>(i)] = [&,i](){playerAction = static_cast<Action>(i);};
     std::vector<Action> states = {ROCK, PAPER, SCISSOR};
     QLGameObject<Action,Action> player = QLGameObject<Action,Action>(atm,states);
     player.rinitQlTable(10.);
-    player.setQlParameters(0.1,0.5);
+    player.setQlParameters(0.1,0.2);
     
     // choose strategy
     std::map<std::string,std::function<Action(int)>> strategies;
@@ -109,9 +114,8 @@ int main (int argc, char const* argv[])
     {
         enemyAction = currentStrategy(i);
         player.doAction();
-        
         char c = evaluateMatch(playerAction,enemyAction);
-        std::cout << c << ' ' << playerAction << ' ' << enemyAction << std::endl;
+        std::cout << c;
         switch(c)
         {
             case 'P':
@@ -127,7 +131,7 @@ int main (int argc, char const* argv[])
         
         if(argc > 3 && !strcmp(argv[3],"control"))
         {
-
+            std::cout << std::endl;
             for(std::map<std::pair<Action,Action>,float>::iterator it = player.qlTable.begin(); it != player.qlTable.end(); it++)
                 std::cout << static_cast<int>(it->first.first) << ' ' << static_cast<int>(it->first.second) << ": " << it->second << std::endl;
             getchar();
