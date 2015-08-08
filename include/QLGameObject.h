@@ -12,8 +12,10 @@ template <class T, class U>
 class QLGameObject : GameObject<T>
 {
 public:
+    typedef std::map<std::pair<T,U>,float> qlTableType;
+    
     // the table for the Qlearning algorithm
-    std::map< std::pair<T,U>, float > qlTable;
+    qlTableType qlTable;
 private:
     bool isQlTableUpToDate = true;
     // parameters for the Qlearning algorithm
@@ -38,8 +40,15 @@ public:
     
     // choose the next action
     T chooseAction();
+    // choose the next action between the permitted ones
+    T chooseAction(std::vector<T> permittedActions);
     // update qlTable and set new state
     void qlUpdate(U ns, float reward = 0.);
+    
+    // save the current QLTable; the set of states and actions must be the same when loading the data
+    void saveQLTable(const char* filename);
+    // load a previously saved QLTable;
+    void loadQLTable(const char* filename);
 };
 
 

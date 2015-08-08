@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <fstream>
 
 template <class T, class U>
 QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed)
@@ -30,7 +31,7 @@ void QLGameObject<T,U>::doAction(T act)
 
 template<class T, class U>
 void QLGameObject<T,U>::doAction()
-{   
+{
     doAction(chooseAction());
 }
 
@@ -61,12 +62,17 @@ template <class T, class U>
 T QLGameObject<T,U>::chooseAction()
 {
     std::vector<T> va = this->validActions();
-    T result = va[0];
-    float ofv = qlTable[std::pair<T,U>(va[0],this->lastState)];
+    return chooseAction(va);
+}
+
+template <class T, class U>
+T QLGameObject<T,U>::chooseAction(std::vector<T> permittedActions)
+{
+    T result = permittedActions[0];
+    float ofv = qlTable[std::pair<T,U>(permittedActions[0],this->lastState)];
     float tmpValue;
     
-    for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++)
-    {
+    for(typename std::vector<T>::iterator it = permittedActions.begin(); it != permittedActions.end(); it++) {
         tmpValue = qlTable[std::pair<T,U>(*it,this->lastState)];
         if(tmpValue > ofv) {
             ofv = tmpValue;
@@ -88,4 +94,31 @@ void QLGameObject<T,U>::qlUpdate(U ns, float reward)
     qlTable[lastAS] += learningRate * ( reward + discountFactor *  ofv - qlTable[lastAS] );
     lastState = ns;
     isQlTableUpToDate = true;
+}
+
+
+template <class T, class U>
+void QLGameObject<T,U>::saveQLTable(const char* filename)
+{
+    std::ofstream outputFile;
+    outputFile.open(filename);
+    
+    for(typename qlTableType::iterator it = qlTable.begin(); it != qlTable.end(); it++) {
+        outputFile << it->second << std::endl;
+    }
+    
+    outputFile.close();
+}
+
+template <class T, class U>
+void QLGameObject<T,U>::loadQLTable(const char* filename)
+{
+    std::ifstream inputFile;
+    inputFile.open(filename);
+    
+    for(typename qlTableType::iterator it = qlTable.begin(); it != qlTable.end(); it++) {
+        inputFile >> it->second;
+    }
+    
+    inputFile.close();
 }
