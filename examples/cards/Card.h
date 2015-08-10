@@ -13,7 +13,7 @@ public:
     static const int CARD_WIDTH = 70;
     static const int CARD_HEIGHT = 100;
     
-    enum Suit {DENARI, BASTONI, SPADE, COPPE};
+    enum Suit {VOID, DENARI, BASTONI, SPADE, COPPE};
     typedef std::pair<Card::Suit,int> t;
     
     Suit suit;
@@ -30,7 +30,8 @@ public:
     
     friend bool operator==(const Card& lc, const Card& rc);
     friend bool operator!=(const Card& lc, const Card& rc);
-    friend bool operator<(const Card& lc, const Card& rc);
+    friend bool operator< (const Card& lc, const Card& rc);
+    friend bool operator<=(const Card& lc, const Card& rc);
     
     friend bool cvcmp(std::vector<Card> v1, std::vector<Card> v2);
 };

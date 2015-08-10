@@ -12,8 +12,12 @@ bool operator!=(const Card& lc, const Card& rc) {
     return ( lc.suit != rc.suit || lc.value != rc.value );
 }
 
-bool operator<(const Card& lc, const Card& rc) {
+bool operator< (const Card& lc, const Card& rc) {
     return lc.suit < rc.suit || (lc.suit == rc.suit && lc.value < rc.value);
+}
+
+bool operator<=(const Card& lc, const Card& rc) {
+    return lc < rc || lc == rc;
 }
 
 
