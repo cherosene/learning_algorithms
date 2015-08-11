@@ -45,6 +45,8 @@ public:
     T chooseAction();
     // choose the next action between the permitted ones
     T chooseAction(std::vector<T> permittedActions);
+    // get a vector with the actions currently available to perform a move
+    std::vector<T> validActions();
     // evaluate the current value of a state (used for comparison between states)
     U stateValue(U state);
     // update qlTable and set new state

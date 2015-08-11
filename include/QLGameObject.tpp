@@ -68,14 +68,7 @@ void QLGameObject<T,U>::setQlParameters(float lr, float df) { learningRate = lr;
 
 template <class T, class U>
 T QLGameObject<T,U>::chooseAction() {
-    std::vector<T> va;
-    if(validationFun == nullptr) {
-        va = this->validActions();
-    }
-    else {
-        va = (*validationFun)(lastState);
-    }
-    
+    std::vector<T> va = this->validActions();
     return chooseAction(va);
 }
 
@@ -94,6 +87,20 @@ T QLGameObject<T,U>::chooseAction(std::vector<T> permittedActions) {
     }
     return result;
 }
+
+template <class T, class U>
+std::vector<T> QLGameObject<T,U>::validActions() {
+    std::vector<T> va;
+    if(validationFun == nullptr) {
+        va = this->validActions();
+    }
+    else {
+        va = (*validationFun)(lastState);
+    }
+    
+    return va;
+}
+
 
 template <class T, class U>
 U QLGameObject<T,U>::stateValue(U state) {
