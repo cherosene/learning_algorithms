@@ -101,8 +101,7 @@ public:
     std::vector<captureType> generateTableCaptures();
     int howManyChoice(Card card, std::vector<captureType> captures);
     bool hasMultipleChoice(Card card, std::vector<captureType> captures);
-    bool evalPlay(Who who, Card card);
-    bool evalPlay(Who who, Card card, std::vector<Card> capturedOnTable);
+    bool evalPlay(std::vector<Card> capture);
     
     bool playCard(Who who, Card card);
     bool playCard(Who who, Card card, std::vector<Card> capturedOnTable);
