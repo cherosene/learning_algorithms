@@ -41,6 +41,9 @@ public:
     // set the parameters for the qlearning algorithm (https://en.wikipedia.org/wiki/Q-learning)
     void setQlParameters(float lr, float df);
     
+    // override last state registered (used for the ql algorithm)
+    void overrideLastState(U nstate);
+    
     // choose the next action
     T chooseAction();
     // choose the next action between the permitted ones

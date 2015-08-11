@@ -67,6 +67,12 @@ void QLGameObject<T,U>::setQlParameters(float lr, float df) { learningRate = lr;
 
 
 template <class T, class U>
+void QLGameObject<T,U>::overrideLastState(U nstate) {
+    lastState = nstate;
+}
+
+
+template <class T, class U>
 T QLGameObject<T,U>::chooseAction() {
     std::vector<T> va = this->validActions();
     return chooseAction(va);
