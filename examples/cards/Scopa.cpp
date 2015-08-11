@@ -38,6 +38,8 @@ Scopa::Scopa(SDL_Renderer* nren) {
     loadDeck();
     loadCursor();
     
+    pointsPlayer = 0;
+    pointsEnemy = 0;
     scopaPointsPlayer = 0;
     scopaPointsEnemy = 0;
     
@@ -264,16 +266,18 @@ std::pair<int,int> Scopa::evaluateScore() {
 }
 
 
-void Scopa::sideOfTheTable(Who who, CardGroup*& hand, CardGroup*& capturedPile, int*& scopaPoints) {
+void Scopa::sideOfTheTable(Who who, CardGroup*& hand, CardGroup*& capturedPile, int*& points, int*& scopaPoints) {
     switch(who) {
         case PLAYER:
             hand = &handPlayer;
             capturedPile = &capturedPilePlayer;
+            points = &pointsPlayer;
             scopaPoints = &scopaPointsPlayer;
             break;
         case ENEMY:
             hand = &handEnemy;
             capturedPile = &capturedPileEnemy;
+            points = &pointsEnemy;
             scopaPoints = &scopaPointsEnemy;
             break;
     }
@@ -281,8 +285,8 @@ void Scopa::sideOfTheTable(Who who, CardGroup*& hand, CardGroup*& capturedPile, 
 
 bool Scopa::hasCard(Who who, Card card) {
     CardGroup *hand = nullptr, *capturedPile = nullptr;
-    int *scopaPoints = nullptr;
-    sideOfTheTable(who,hand,capturedPile,scopaPoints);
+    int *scopaPoints = nullptr, *points = nullptr;
+    sideOfTheTable(who,hand,capturedPile,points,scopaPoints);
     if(hand->mem(card)) { return true; }
     else { return false; }
 }
@@ -332,6 +336,14 @@ int Scopa::howManyChoice(Card card, std::vector<captureType> captures) {
 
 bool Scopa::hasMultipleChoice(Card card, std::vector<captureType> captures) { return howManyChoice(card,captures) > 1; }
 
+int Scopa::evalPlay(std::vector<Card> capture) {
+    int result = 0;
+    if(std::find(capture.begin(),capture.end(),Card(DENARI,7 ,nullptr,nullptr)) == capture.end()) { result++; }
+    if(std::find(capture.begin(),capture.end(),Card(DENARI,10,nullptr,nullptr)) == capture.end()) { result++; }
+    if(capture.size() == table.cards.size()) { result++; }
+    return result;
+}
+
 
 bool Scopa::playCard(Who who, Card card) {
     
@@ -352,8 +364,8 @@ bool Scopa::playCard(Who who, Card card) {
     }
     
     CardGroup *hand = nullptr, *capturedPile = nullptr;
-    int *scopaPoints;
-    sideOfTheTable(who,hand,capturedPile,scopaPoints);
+    int *scopaPoints, *points;
+    sideOfTheTable(who,hand,capturedPile,points,scopaPoints);
     if(capturedCards.size() == 0) {
         move(*hand,table,card);
         return false;
@@ -361,7 +373,7 @@ bool Scopa::playCard(Who who, Card card) {
     else {
         move(*hand,*capturedPile,card);
         for(std::vector<Card>::iterator it = capturedCards.begin(); it != capturedCards.end(); it++) { move(table,*capturedPile,*it); }
-        if(table.cards.size() == 0) { (*scopaPoints)++; }
+        if(table.cards.size() == 0) { (*points)++; (*scopaPoints)++; }
         return true;
     }
 }
@@ -378,19 +390,19 @@ bool Scopa::playCard(Who who, Card card, std::vector<Card> capturedOnTable) {
     if(!isOnTable) { return false; }
     
     CardGroup *hand = nullptr, *capturedPile = nullptr;
-    int *scopaPoints;
-    sideOfTheTable(who,hand,capturedPile,scopaPoints);
+    int *scopaPoints, *points;
+    sideOfTheTable(who,hand,capturedPile,points,scopaPoints);
     move(*hand,*capturedPile,card);
     for(std::vector<Card>::iterator it = capturedOnTable.begin(); it != capturedOnTable.end(); it++) { move(table,*capturedPile,*it); }
-    if(table.cards.size() == 0) { (*scopaPoints)++; }
+    if(table.cards.size() == 0) { (*points)++; (*scopaPoints)++; }
     return true;
 }
 
 void Scopa::playOnFocus(Who who) {
     std::cout << "void Scopa::playOnFocus(Who who)" << std::endl;
     CardGroup *hand = nullptr, *capturedPile = nullptr;
-    int *scopaPoints;
-    sideOfTheTable(who,hand,capturedPile,scopaPoints);
+    int *scopaPoints, *points;
+    sideOfTheTable(who,hand,capturedPile,points,scopaPoints);
     
     if(!hand->mem(focus->second)) {
         // FIXME: throw exception
@@ -403,8 +415,8 @@ void Scopa::playOnFocus(Who who) {
 
 void Scopa::playOnFocus(Who who, std::vector<Card> capturedOnTable) {
     CardGroup *hand = nullptr, *capturedPile = nullptr;
-    int *scopaPoints;
-    sideOfTheTable(who,hand,capturedPile,scopaPoints);
+    int *scopaPoints, *points;
+    sideOfTheTable(who,hand,capturedPile,points,scopaPoints);
     
     if(!hand->mem(focus->second)) {
         // FIXME: throw exception

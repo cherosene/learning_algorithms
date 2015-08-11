@@ -54,6 +54,8 @@ public:
     CardGroup table;
     CardGroup deck;
     
+    int pointsPlayer;
+    int pointsEnemy;
     int scopaPointsPlayer;
     int scopaPointsEnemy;
     
@@ -91,7 +93,7 @@ public:
     void startMatch();
     std::pair<int,int> evaluateScore();
     
-    void sideOfTheTable(Who who, CardGroup*& hand, CardGroup*& capturedPile, int*& scopaPoints);
+    void sideOfTheTable(Who who, CardGroup*& hand, CardGroup*& capturedPile, int*& points, int*& scopaPoints);
     bool hasCard(Who who, Card card);
     bool matchHasEnded();
     
@@ -99,6 +101,8 @@ public:
     std::vector<captureType> generateTableCaptures();
     int howManyChoice(Card card, std::vector<captureType> captures);
     bool hasMultipleChoice(Card card, std::vector<captureType> captures);
+    bool evalPlay(Who who, Card card);
+    bool evalPlay(Who who, Card card, std::vector<Card> capturedOnTable);
     
     bool playCard(Who who, Card card);
     bool playCard(Who who, Card card, std::vector<Card> capturedOnTable);
