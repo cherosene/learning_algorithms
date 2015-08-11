@@ -24,10 +24,13 @@ private:
     // last action performed/state
     T lastAction;
     U lastState;
+    std::function<std::vector<T>(U)>* validationFun;
     
 public:
     // to instantiate a QLGameObject it requires a map [action->function] (see GameObject.h) and a set of states to define the qlTable
     QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, int nx = 0, int ny = 0, float nspeed = 0.);
+    // eventually a function which specify the valid actions for a certain state can be passed as a parameter
+    QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, std::function<std::vector<T>(U)> validActFun, int nx = 0, int ny = 0, float nspeed = 0.);
     
     // call the function associated with action act
     void doAction(T act);
@@ -42,12 +45,15 @@ public:
     T chooseAction();
     // choose the next action between the permitted ones
     T chooseAction(std::vector<T> permittedActions);
+    // evaluate the current value of a state (used for comparison between states)
+    U stateValue(U state);
     // update qlTable and set new state
     void qlUpdate(U ns, float reward = 0.);
     
     // save the current QLTable; the set of states and actions must be the same when loading the data
     void saveQLTable(const char* filename);
     // load a previously saved QLTable;
+    void loadQLTable(std::ifstream inputFile);
     void loadQLTable(const char* filename);
 };
 

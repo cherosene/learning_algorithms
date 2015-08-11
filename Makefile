@@ -17,22 +17,24 @@ HEADERS = $(wildcard $(INCLUDEDIR)/*.h)
 CPP = $(wildcard $(SRCDIR)/*.cpp)
 OBJ = $(notdir $(CPP:.cpp=.o))
 TEST = test.cpp
+MAIN_EXE = $(MAIN:.cpp=)
+TEST_EXE = $(TEST:.cpp=)
 
 RPS = $(RPSDIR)/rps.cpp
+RPS_EXE = $(notdir $(RPS:.cpp=))
 
 CARDSOBJ_AUX = utility.o Card.o CardGroup.o Scopa.o
 CARDSOBJ = $(CARDSOBJ_AUX:%=$(CARDSDIR)/%)
 STATEGENERATOR = $(CARDSDIR)/scopaStateGenerator.cpp
-
-MAIN_EXE = $(MAIN:.cpp=)
-TEST_EXE = $(TEST:.cpp=)
-RPS_EXE = $(notdir $(RPS:.cpp=))
+MVSM = $(CARDSDIR)/mvsm.cpp
 STATEGENERATOR_EXE = $(notdir $(STATEGENERATOR:.cpp=))
-EXE = $(MAIN_EXE) $(TEST_EXE) $(RPS_EXE) $(STATEGENERATOR_EXE)
+MVSM_EXE = $(notdir $(MVSM:.cpp=))
+
+EXE = $(MAIN_EXE) $(TEST_EXE) $(RPS_EXE) $(STATEGENERATOR_EXE) $(MVSM_EXE)
 
 .PHONY: all compile almostclean clean
 
-all: $(STATEGENERATOR_EXE)
+all: $(MVSM_EXE)
 
 compile: $(HEADERS) $(CPP)
 	$(CC) $(CFLAGS) $(CPP)
@@ -41,11 +43,16 @@ test: test.cpp
 	# $(MAKE) compile
 	$(CC) $(LFLAGS) $(TEST) -o $(TEST_EXE)
 	
-rps:
+$(RPS_EXE):
 	$(CC) $(LFLAGS) $(RPS) -o $(RPS_EXE)
 	
 hvsh:
 	cd $(CARDSDIR); $(MAKE) hvsh
+	
+$(MVSM_EXE):
+	cd $(CARDSDIR); $(MAKE) compile
+	$(CC) $(SDL_LFLAGS) -I$(CARDSDIR) $(CARDSOBJ) $(MVSM) -o $(MVSM_EXE)
+	
 	
 $(STATEGENERATOR_EXE):
 	cd $(CARDSDIR); $(MAKE) compile

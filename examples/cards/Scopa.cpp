@@ -287,6 +287,11 @@ bool Scopa::hasCard(Who who, Card card) {
     else { return false; }
 }
 
+bool Scopa::matchHasEnded() {
+    if(deck.cards.size() == 0 && table.cards.size() == 0 && handPlayer.cards.size() == 0 && handenemy.cards.size() == 0) { return true; }
+    else { return false; }
+}
+
 
 std::vector<Scopa::captureType> Scopa::generateTableCaptures() {
     std::vector<captureType> result, tmpVec;

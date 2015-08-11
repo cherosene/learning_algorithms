@@ -2,8 +2,8 @@
 #include <fstream>
 
 template <class T, class U>
-QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed)
-{
+QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed) {
+    validationFun = nullptr;
     for(typename std::map<T,std::function<void()>>::iterator amit = this->actionToMove.begin(); amit != this->actionToMove.end(); amit++ )
     {
         for(typename std::vector<U>::iterator sit = nstates.begin(); sit != nstates.end(); sit++ )
@@ -13,10 +13,20 @@ QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vect
     }
 }
 
+template <class T, class U>
+QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, std::function<std::vector<T>(U)> validActFun, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed) {
+    validationFun = validActFun;
+    for(typename std::vector<U>::iterator sit = nstates.begin(); sit != nstates.end(); sit++ ) {
+        std::vector<T> validActVec = validActFun(*sit);
+        for(typename std::vector<T>::iterator ait = validActVec.begin(); ait != validActVec.end(); ait++) {
+            qlTable.insert( std::pair<std::pair<T,U>,float>( std::pair<T,U>(*ait,*sit), 0. ) );
+        }
+    }
+}
+
 
 template<class T, class U>
-void QLGameObject<T,U>::doAction(T act)
-{
+void QLGameObject<T,U>::doAction(T act) {
     if(isQlTableUpToDate)
     {
         GameObject<T>::doAction(act);
@@ -30,16 +40,14 @@ void QLGameObject<T,U>::doAction(T act)
 }
 
 template<class T, class U>
-void QLGameObject<T,U>::doAction()
-{
+void QLGameObject<T,U>::doAction() {
     doAction(chooseAction());
 }
 
 
 
 template <class T, class U>
-void QLGameObject<T,U>::rinitQlTable(float range)
-{
+void QLGameObject<T,U>::rinitQlTable(float range) {
     float r;
     
     if(range<=0)
@@ -59,15 +67,20 @@ void QLGameObject<T,U>::setQlParameters(float lr, float df) { learningRate = lr;
 
 
 template <class T, class U>
-T QLGameObject<T,U>::chooseAction()
-{
-    std::vector<T> va = this->validActions();
+T QLGameObject<T,U>::chooseAction() {
+    std::vector<T> va;
+    if(validationFun == nullptr) {
+        va = this->validActions();
+    }
+    else {
+        va = (*validationFun)(lastState);
+    }
+    
     return chooseAction(va);
 }
 
 template <class T, class U>
-T QLGameObject<T,U>::chooseAction(std::vector<T> permittedActions)
-{
+T QLGameObject<T,U>::chooseAction(std::vector<T> permittedActions) {
     T result = permittedActions[0];
     float ofv = qlTable[std::pair<T,U>(permittedActions[0],this->lastState)];
     float tmpValue;
@@ -83,8 +96,33 @@ T QLGameObject<T,U>::chooseAction(std::vector<T> permittedActions)
 }
 
 template <class T, class U>
-void QLGameObject<T,U>::qlUpdate(U ns, float reward)
-{
+U QLGameObject<T,U>::stateValue(U state) {
+    std::vector<T> va = this->validActions();
+    
+    float* m = nullptr;
+    
+    for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++) {
+        std::pair<T,U> curPair = std::pair<T,U>(*it,state);
+        typename qlTableType::iterator curIt = qlTable.find(curPair);
+        if(curIt != qlTable.end()) {
+            if(m) {
+                if(curIt->second > m) { m = curIt->second; }
+            }
+            else {
+                m = new float;
+                m = curIt->second;
+            }
+        }
+    }
+    
+    if(!m) {
+        // FIXME: throw exception
+    }
+    return m;
+}
+
+template <class T, class U>
+void QLGameObject<T,U>::qlUpdate(U ns, float reward) {
     std::pair<T,U> lastAS = std::pair<T,U>(lastAction,lastState);
     
     std::vector<T> va = this->validActions();
@@ -98,8 +136,7 @@ void QLGameObject<T,U>::qlUpdate(U ns, float reward)
 
 
 template <class T, class U>
-void QLGameObject<T,U>::saveQLTable(const char* filename)
-{
+void QLGameObject<T,U>::saveQLTable(const char* filename) {
     std::ofstream outputFile;
     outputFile.open(filename);
     
@@ -111,14 +148,18 @@ void QLGameObject<T,U>::saveQLTable(const char* filename)
 }
 
 template <class T, class U>
-void QLGameObject<T,U>::loadQLTable(const char* filename)
-{
-    std::ifstream inputFile;
-    inputFile.open(filename);
-    
+void QLGameObject<T,U>::loadQLTable(std::ifstream inputFile) {
     for(typename qlTableType::iterator it = qlTable.begin(); it != qlTable.end(); it++) {
         inputFile >> it->second;
     }
+}
+
+template <class T, class U>
+void QLGameObject<T,U>::loadQLTable(const char* filename) {
+    std::ifstream inputFile;
+    inputFile.open(filename);
+    
+    loadQLTable(inputFile);
     
     inputFile.close();
 }

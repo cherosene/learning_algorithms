@@ -93,6 +93,7 @@ public:
     
     void sideOfTheTable(Who who, CardGroup*& hand, CardGroup*& capturedPile, int*& scopaPoints);
     bool hasCard(Who who, Card card);
+    bool matchHasEnded();
     
     // create a vector containing all the possible captures
     std::vector<captureType> generateTableCaptures();

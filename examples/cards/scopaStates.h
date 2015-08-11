@@ -83,10 +83,12 @@ std::vector<stateType> generateStates() {
     
     std::vector<stateType> states;
     int counter = 0;
+    groupCardStateType curTable = {};
+    auxiliarFun(curTable,hands,states);
     for(std::vector<Card>::const_iterator it1 = STATE_ATOMS.begin(); it1 != STATE_ATOMS.end(); it1++) {
         counter++;
         std::cout << "card " << counter << std::endl;
-        groupCardStateType curTable = {*it1};
+        curTable = {*it1};
         auxiliarFun(curTable,hands,states);
         for(std::vector<Card>::const_iterator it2 = it1; it2 != STATE_ATOMS.end(); it2++) {
             curTable = { *it1, *it2 };
