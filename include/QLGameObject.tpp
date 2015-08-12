@@ -2,26 +2,13 @@
 #include <fstream>
 
 template <class T, class U>
-QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed) {
+QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed) {
     validationFun = nullptr;
-    for(typename std::map<T,std::function<void()>>::iterator amit = this->actionToMove.begin(); amit != this->actionToMove.end(); amit++ )
-    {
-        for(typename std::vector<U>::iterator sit = nstates.begin(); sit != nstates.end(); sit++ )
-        {
-            qlTable.insert( std::pair<std::pair<T,U>,float>( std::pair<T,U>(amit->first,*sit), 0. ) );
-        }
-    }
 }
 
 template <class T, class U>
-QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::vector<U> nstates, std::function<std::vector<T>(U)> validActFun, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed) {
-    validationFun = validActFun;
-    for(typename std::vector<U>::iterator sit = nstates.begin(); sit != nstates.end(); sit++ ) {
-        std::vector<T> validActVec = validActFun(*sit);
-        for(typename std::vector<T>::iterator ait = validActVec.begin(); ait != validActVec.end(); ait++) {
-            qlTable.insert( std::pair<std::pair<T,U>,float>( std::pair<T,U>(*ait,*sit), 0. ) );
-        }
-    }
+QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, std::function<std::vector<T>(U)> validActFun, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed) {
+    validationFun = &validActFun;
 }
 
 
@@ -47,18 +34,26 @@ void QLGameObject<T,U>::doAction() {
 
 
 template <class T, class U>
-void QLGameObject<T,U>::rinitQlTable(float range) {
-    float r;
+void QLGameObject<T,U>::rinitQlTable(std::vector<U> nstates, float range) {
     
-    if(range<=0)
-    {
+    if(range<=0) {
         // FIXME: throw an exception
     }
     
-    for( typename std::map<std::pair<T,U>,float>::iterator it = qlTable.begin(); it != qlTable.end(); it++ )
-    {
-        r = static_cast<float>(rand())/(static_cast<float>(RAND_MAX/range));
-        it->second = r;
+    for(typename std::vector<U>::iterator sit = nstates.begin(); sit != nstates.end(); sit++ ) {
+        std::vector<T> validActVec = validActFun(*sit);
+        for(typename std::vector<T>::iterator ait = validActVec.begin(); ait != validActVec.end(); ait++) {
+            float r = static_cast<float>(rand())/(static_cast<float>(RAND_MAX/range));
+            qlTable.insert( std::pair<std::pair<T,U>,float>( std::pair<T,U>(*ait,*sit), r ) );
+        }
+    }
+}
+
+template <class T, class U>
+void QLGameObject<T,U>::addState(U state, float range) {
+    std::vector<T> va = validActions(state);
+    for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++) {
+        qlTable[qlTableEntryType(*it,state)] = static_cast<float>(rand())/(static_cast<float>(RAND_MAX/range));
     }
 }
 
@@ -98,7 +93,7 @@ template <class T, class U>
 std::vector<T> QLGameObject<T,U>::validActions() {
     std::vector<T> va;
     if(validationFun == nullptr) {
-        va = this->validActions();
+        va = GameObject<T>::validActions();
     }
     else {
         va = (*validationFun)(lastState);
@@ -109,7 +104,7 @@ std::vector<T> QLGameObject<T,U>::validActions() {
 
 
 template <class T, class U>
-U QLGameObject<T,U>::stateValue(U state) {
+float QLGameObject<T,U>::stateValue(U state) {
     std::vector<T> va = this->validActions();
     
     float* m = nullptr;
@@ -119,11 +114,11 @@ U QLGameObject<T,U>::stateValue(U state) {
         typename qlTableType::iterator curIt = qlTable.find(curPair);
         if(curIt != qlTable.end()) {
             if(m) {
-                if(curIt->second > m) { m = curIt->second; }
+                if(curIt->second > *m) { *m = curIt->second; }
             }
             else {
                 m = new float;
-                m = curIt->second;
+                *m = curIt->second;
             }
         }
     }
@@ -131,7 +126,7 @@ U QLGameObject<T,U>::stateValue(U state) {
     if(!m) {
         // FIXME: throw exception
     }
-    return m;
+    return *m;
 }
 
 template <class T, class U>
@@ -148,31 +143,37 @@ void QLGameObject<T,U>::qlUpdate(U ns, float reward) {
 }
 
 
-template <class T, class U>
-void QLGameObject<T,U>::saveQLTable(const char* filename) {
-    std::ofstream outputFile;
-    outputFile.open(filename);
-    
-    for(typename qlTableType::iterator it = qlTable.begin(); it != qlTable.end(); it++) {
-        outputFile << it->second << std::endl;
-    }
-    
-    outputFile.close();
-}
-
-template <class T, class U>
-void QLGameObject<T,U>::loadQLTable(std::ifstream inputFile) {
-    for(typename qlTableType::iterator it = qlTable.begin(); it != qlTable.end(); it++) {
-        inputFile >> it->second;
-    }
-}
-
-template <class T, class U>
-void QLGameObject<T,U>::loadQLTable(const char* filename) {
-    std::ifstream inputFile;
-    inputFile.open(filename);
-    
-    loadQLTable(inputFile);
-    
-    inputFile.close();
-}
+// FIXME: needs a generic implementation
+// template <class T, class U>
+// void QLGameObject<T,U>::saveQLTable(const char* filename) {
+//     std::ofstream outputFile;
+//     outputFile.open(filename);
+//
+//     for(typename qlTableType::iterator it = qlTable.begin(); it != qlTable.end(); it++) {
+//         outputFile << it->first  << std::endl;
+//         outputFile << it->second << std::endl;
+//     }
+//
+//     outputFile.close();
+// }
+//
+// template <class T, class U>
+// void QLGameObject<T,U>::loadQLTable(std::ifstream& inputFile) {
+//     for(typename qlTableType::iterator it = qlTable.begin(); it != qlTable.end(); it++) {
+//         qlTableEntryType tmpEntry;
+//         float f;
+//         inputFile >> tmpEntry;
+//         inputFile >> f;
+//         qlTable[tmpEntry] = f;
+//     }
+// }
+//
+// template <class T, class U>
+// void QLGameObject<T,U>::loadQLTable(const char* filename) {
+//     std::ifstream inputFile;
+//     inputFile.open(filename);
+//
+//     loadQLTable(inputFile);
+//
+//     inputFile.close();
+// }

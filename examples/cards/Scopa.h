@@ -71,6 +71,7 @@ public:
 public:
     Scopa(SDL_Renderer* nren);
     
+    void loadFakeDeck();
     void loadDeck();
     void loadCursor();
     
@@ -91,7 +92,7 @@ public:
     void dealHand(Who who);
     void dealTable();
     void startMatch();
-    std::pair<int,int> evaluateScore();
+    void evaluateScore();
     
     void sideOfTheTable(Who who, CardGroup*& hand, CardGroup*& capturedPile, int*& points, int*& scopaPoints);
     bool hasCard(Who who, Card card);
@@ -101,7 +102,7 @@ public:
     std::vector<captureType> generateTableCaptures();
     int howManyChoice(Card card, std::vector<captureType> captures);
     bool hasMultipleChoice(Card card, std::vector<captureType> captures);
-    bool evalPlay(std::vector<Card> capture);
+    int evalPlay(std::vector<Card> capture);
     
     bool playCard(Who who, Card card);
     bool playCard(Who who, Card card, std::vector<Card> capturedOnTable);

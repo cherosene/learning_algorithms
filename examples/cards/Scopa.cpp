@@ -35,8 +35,13 @@ Scopa::Scopa(SDL_Renderer* nren) {
     table                 = CardGroup( true,  false,  ren,    TABLE_X,                TABLE_Y,        TABLE_SHIFT_X,      TABLE_SHIFT_Y       );
     deck                  = CardGroup( false, true,   ren,    DECK_X,                 DECK_Y                                                  );
     
-    loadDeck();
-    loadCursor();
+    if(ren != nullptr) {
+        loadDeck();
+        loadCursor();
+    }
+    else {
+        loadFakeDeck();
+    }
     
     pointsPlayer = 0;
     pointsEnemy = 0;
@@ -46,6 +51,20 @@ Scopa::Scopa(SDL_Renderer* nren) {
     focus = nullptr;
 }
 
+
+// FIXME: fix this mess
+void Scopa::loadFakeDeck() {
+    // load deck
+    std::vector<char> suitChar = {'d','c','h','s'};
+    for(std::vector<char>::iterator cit = suitChar.begin(); cit != suitChar.end(); cit++)
+    {
+        for(size_t i = 1; i <= 10 ; ++i)
+        {
+            Card ncard = Card( charToSuit(*cit), i, nullptr, nullptr );
+            deck.pushTop(ncard);
+        }
+    }
+}
 
 void Scopa::loadDeck() {
     
@@ -233,7 +252,7 @@ void Scopa::startMatch() {
     scopaPointsEnemy = 0;
 }
 
-std::pair<int,int> Scopa::evaluateScore() {
+void Scopa::evaluateScore() {
     int pointsPlayer = scopaPointsPlayer, pointsEnemy = scopaPointsEnemy;
     int cardNumPlayer = capturedPilePlayer.cards.size(), cardNumEnemy = capturedPileEnemy.cards.size();
     
@@ -245,24 +264,19 @@ std::pair<int,int> Scopa::evaluateScore() {
     if(cardNumPlayer > cardNumEnemy) { pointsPlayer++; }
     else if(cardNumPlayer < cardNumEnemy) { pointsEnemy++; }
     
-    // number of DENARI; king of DENARI; 7 of DENARI
+    // number of DENARI
     int denariPlayer = 0, denariEnemy = 0;
-    Card seven = Card(Card::DENARI,7,nullptr,nullptr), king = Card(Card::DENARI,10,nullptr,nullptr);
     for(CardGroup::cardIterator it = capturedPilePlayer.cards.begin(); it != capturedPilePlayer.cards.end(); it++) {
         if(it->suit == Card::DENARI) { denariPlayer++; }
-        if(*it == seven || *it == king) { pointsPlayer++; }
     }
     for(CardGroup::cardIterator it = capturedPileEnemy.cards.begin(); it != capturedPileEnemy.cards.end(); it++) {
         if(it->suit == Card::DENARI) { denariEnemy++; }
-        if(*it == seven || *it == king) { pointsEnemy++; }
     }
     if(denariPlayer > denariEnemy) { pointsPlayer++; }
     else if(denariPlayer < denariEnemy) { pointsEnemy++; }
     
     // primiera
     // FIXME: not implemented yet
-    
-    return std::pair<int,int>(pointsPlayer,pointsEnemy);
 }
 
 
@@ -292,7 +306,7 @@ bool Scopa::hasCard(Who who, Card card) {
 }
 
 bool Scopa::matchHasEnded() {
-    if(deck.cards.size() == 0 && table.cards.size() == 0 && handPlayer.cards.size() == 0 && handenemy.cards.size() == 0) { return true; }
+    if(deck.cards.size() == 0 && table.cards.size() == 0 && handPlayer.cards.size() == 0 && handEnemy.cards.size() == 0) { return true; }
     else { return false; }
 }
 
@@ -338,8 +352,8 @@ bool Scopa::hasMultipleChoice(Card card, std::vector<captureType> captures) { re
 
 int Scopa::evalPlay(std::vector<Card> capture) {
     int result = 0;
-    if(std::find(capture.begin(),capture.end(),Card(DENARI,7 ,nullptr,nullptr)) == capture.end()) { result++; }
-    if(std::find(capture.begin(),capture.end(),Card(DENARI,10,nullptr,nullptr)) == capture.end()) { result++; }
+    if(std::find(capture.begin(),capture.end(),Card(Card::DENARI,7 ,nullptr,nullptr)) == capture.end()) { result++; }
+    if(std::find(capture.begin(),capture.end(),Card(Card::DENARI,10,nullptr,nullptr)) == capture.end()) { result++; }
     if(capture.size() == table.cards.size()) { result++; }
     return result;
 }
