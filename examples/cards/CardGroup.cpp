@@ -50,7 +50,8 @@ void move(CardGroup& from, CardGroup& to, CardGroup::cardIterator card) {
 void move(CardGroup& from, CardGroup& to, Card::Suit s, int v) { move(from,to,Card(s,v,nullptr,nullptr)); }
 
 void moveAll(CardGroup& from, CardGroup& to) {
-    for(size_t i = 0; i < from.cards.size(); ++i)
+    int originalSize = from.cards.size();
+    for(size_t i = 0; i < originalSize; ++i)
         move(from,to,from.cards.begin());
 }
 

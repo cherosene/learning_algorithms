@@ -49,7 +49,7 @@ $(RPS_EXE):
 hvsh:
 	cd $(CARDSDIR); $(MAKE) hvsh
 	
-$(MVSM_EXE):
+$(MVSM_EXE): 
 	cd $(CARDSDIR); $(MAKE) compile
 	$(CC) $(SDL_LFLAGS) -I$(CARDSDIR) $(CARDSOBJ) $(MVSM) -o $(MVSM_EXE)
 	

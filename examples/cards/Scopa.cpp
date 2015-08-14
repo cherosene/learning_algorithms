@@ -29,7 +29,7 @@ Scopa::Scopa(SDL_Renderer* nren) {
     ren = nren;
     
     handPlayer            = CardGroup( true,  false,  ren,    HANDPLAYER_X,           HANDPLAYER_Y,   HANDPLAYER_SHIFT_X, HANDPLAYER_SHIFT_Y  );
-    handEnemy             = CardGroup( true, false,  ren,    HANDENEMY_X,            HANDENEMY_Y,    HANDENEMY_SHIFT_X,  HANDENEMY_SHIFT_Y   );
+    handEnemy             = CardGroup( false, false,  ren,    HANDENEMY_X,            HANDENEMY_Y,    HANDENEMY_SHIFT_X,  HANDENEMY_SHIFT_Y   );
     capturedPilePlayer    = CardGroup( true,  true,   ren,    CAPTUREDPILEPLAYER_X,   CAPTUREDPILEPLAYER_Y                                    );
     capturedPileEnemy     = CardGroup( true,  true,   ren,    CAPTUREDPILEENEMY_X,    CAPTUREDPILEENEMY_Y                                     );
     table                 = CardGroup( true,  false,  ren,    TABLE_X,                TABLE_Y,        TABLE_SHIFT_X,      TABLE_SHIFT_Y       );
@@ -157,13 +157,10 @@ void Scopa::addCursor(CardGroup cg, std::vector<Card> cardVec) {
 void Scopa::resetCursors() { cursors.clear(); }
 
 void Scopa::setFocus(Who who) {
-    std::cout << "void Scopa::setFocus(Who who)" << std::endl;
     who == PLAYER? setFocus(handPlayer) : setFocus(handEnemy);
 }
 
 void Scopa::setFocus(CardGroup cg) {
-    std::cout << "void Scopa::setFocus(CardGroup cg)" << std::endl;
-    
     if(cg.cards.size() == 0) {
         // FIXME: throw exception, focus on empty hand
     }
@@ -254,6 +251,9 @@ void Scopa::startMatch() {
 
 void Scopa::evaluateScore() {
     int pointsPlayer = scopaPointsPlayer, pointsEnemy = scopaPointsEnemy;
+    if(lastCapture == PLAYER) { moveAll(table,capturedPilePlayer); }
+    else { moveAll(table,capturedPileEnemy); }
+    
     int cardNumPlayer = capturedPilePlayer.cards.size(), cardNumEnemy = capturedPileEnemy.cards.size();
     
     if( cardNumPlayer + cardNumEnemy != 40 ) {
@@ -306,7 +306,7 @@ bool Scopa::hasCard(Who who, Card card) {
 }
 
 bool Scopa::matchHasEnded() {
-    if(deck.cards.size() == 0 && table.cards.size() == 0 && handPlayer.cards.size() == 0 && handEnemy.cards.size() == 0) { return true; }
+    if(deck.cards.size() == 0 && handPlayer.cards.size() == 0 && handEnemy.cards.size() == 0) { return true; }
     else { return false; }
 }
 
@@ -385,6 +385,7 @@ bool Scopa::playCard(Who who, Card card) {
         return false;
     }
     else {
+        lastCapture = who;
         move(*hand,*capturedPile,card);
         for(std::vector<Card>::iterator it = capturedCards.begin(); it != capturedCards.end(); it++) { move(table,*capturedPile,*it); }
         if(table.cards.size() == 0) { (*points)++; (*scopaPoints)++; }
@@ -393,8 +394,6 @@ bool Scopa::playCard(Who who, Card card) {
 }
 
 bool Scopa::playCard(Who who, Card card, std::vector<Card> capturedOnTable) {
-    std::cout << "bool Scopa::playCard(Who who, Card card, std::vector<Card> capturedOnTable)" << std::endl;
-    
     if(!hasCard(who,card)) { return false; }
     
     std::vector<Scopa::captureType> tc = generateTableCaptures();
@@ -409,11 +408,11 @@ bool Scopa::playCard(Who who, Card card, std::vector<Card> capturedOnTable) {
     move(*hand,*capturedPile,card);
     for(std::vector<Card>::iterator it = capturedOnTable.begin(); it != capturedOnTable.end(); it++) { move(table,*capturedPile,*it); }
     if(table.cards.size() == 0) { (*points)++; (*scopaPoints)++; }
+    lastCapture = who;
     return true;
 }
 
 void Scopa::playOnFocus(Who who) {
-    std::cout << "void Scopa::playOnFocus(Who who)" << std::endl;
     CardGroup *hand = nullptr, *capturedPile = nullptr;
     int *scopaPoints, *points;
     sideOfTheTable(who,hand,capturedPile,points,scopaPoints);

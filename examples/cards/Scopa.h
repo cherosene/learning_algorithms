@@ -58,6 +58,7 @@ public:
     int pointsEnemy;
     int scopaPointsPlayer;
     int scopaPointsEnemy;
+    Who lastCapture;
     
     SDL_Renderer* ren;
     std::map<std::string,SDL_Texture*> cardTex;

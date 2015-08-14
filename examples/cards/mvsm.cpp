@@ -3,17 +3,25 @@
 #include "scopaStates.h"
 
 
+
+const int MATCH_COUNTER_STEP = 10000;
+const int BACKUP_SAVE_STEP = 10000000;
+
 const char* PLAYER_QLTABLE_FILENAME = "qlTablePlayer.qlt";
 const char* ENEMY_QLTABLE_FILENAME  = "qlTableEnemy.qlt";
+
+const char* PLAYER_QLTABLE_BACKUP_FILENAME = "qlTablePlayer_backup.qlt";
+const char* ENEMY_QLTABLE_BACKUP_FILENAME  = "qlTableEnemy_backup.qlt";
 
 const float REWARD_WIN  = 0.2;
 const float REWARD_LOSE = 0.2;
 
 
 typedef std::vector<Card> cardVec;
-typedef std::pair<int,int> stateAlias;
+typedef std::pair<unsigned int,unsigned long int> stateAlias;
 
 enum Action { PLAY1 , PLAY2, PLAY3 };
+
 
 int cardToInt(Card card) { return (int)card.suit * 10 + card.value; }
 Card intToCard(int n) { return Card( (Card::Suit)((n-1)/10), (n+1)%10, nullptr, nullptr ); }
@@ -39,48 +47,51 @@ cardVec intToCardVec(int n) {
     return result;
 }
 
-void saveQLTable(QLGameObject<Action,stateAlias> go, const char* filename) {
+void saveQLTable(QLGameObject<Action,stateAlias>& go, const char* filename) {
     std::ofstream outputFile;
     outputFile.open(filename);
     for(QLGameObject<Action,stateAlias>::qlTableType::iterator it = go.qlTable.begin(); it != go.qlTable.end(); it++) {
-        outputFile << (int)it->first.first << std::endl;
-        outputFile << it->first.second.first << std::endl;
-        outputFile << it->first.second.second << std::endl;
-        outputFile << it->second << std::endl;
+        outputFile.write((char *)&(it->first.first),sizeof(Action));
+        outputFile.write((char *)&(it->first.second.first),sizeof(unsigned int));
+        outputFile.write((char *)&(it->first.second.second),sizeof(unsigned long int));
+        outputFile.write((char *)&(it->second),sizeof(float));
     }
     outputFile.close();
 }
 
+void loadQLTable(QLGameObject<Action,stateAlias>& go, std::ifstream& inputFile) {
+    Action act;
+    int stateFirst, stateSecond;
+    float value;
+    while(inputFile.good()) {
+        inputFile.read((char *)&act,sizeof(Action));
+        if(!inputFile.good()) { break; }
+        inputFile.read((char *)&stateFirst,sizeof(unsigned int));
+        inputFile.read((char *)&stateSecond,sizeof(unsigned long int));
+        inputFile.read((char *)&value,sizeof(float));
+        stateAlias nstate = stateAlias(stateFirst,stateSecond);
+        go.qlTable[std::pair<Action,stateAlias>(act,nstate)] = value;
+    }
+}
 
-// std::vector<std::vector<Card>> generateSubtables(Scopa game) {
-//     std::vector<std::vector<Card>> result;
-//     for(std::vector<Card>::iterator it1 = game.table.cards.begin(); it1 != game.table.cards.end(); it1++) {
-//         for(std::vector<Card>::iterator it2 = it1+1; it2 != game.table.cards.end(); it2++) {
-//             for(std::vector<Card>::iterator it3 = it2+1; it3 != game.table.cards.end(); it3++) {
-//                 for(std::vector<Card>::iterator it4 = it3+1; it4 != game.table.cards.end(); it4++) {
-//                     std::vector<Card> tmpSubtable = { *it1, *it2, *it3, *it4 };
-//                     result.push_back(tmpSubtable);
-//                 }
-//             }
-//         }
-//     }
-//     return result;
-// }
 
 
 
 int main (int argc, char const* argv[])
 {
+    // log function
+    std::function<void(const char*)> log = [](const char* msg){
+        std::cout << msg << std::endl;
+    };
+    
     if(argc<2) {
         // FIXME: throw exception
+        log("No input argument.");
+        exit(-1);
     }
     
-    // define states and actions
-    // std::cout << "Loading states..." << std::endl;
-    // std::vector<stateType> states = loadStates("states.bin");
-    
     // create the game and initialize some useful variables
-    std::cout << "Creating the game..." << std::endl;
+    log("Creating the game...");
     Scopa game = Scopa(nullptr);
     Scopa::Who curTurn = Scopa::PLAYER;
     bool multipleChoice = false;
@@ -88,8 +99,8 @@ int main (int argc, char const* argv[])
     int playerLastScore = 0, enemyLastScore = 0;
     
     // define function to play cards
-    std::cout << "Defining moves..." << std::endl;
-    std::function<void(int)> playSmart = [curTurn,&game,&multipleChoice,&curCard](int n) {
+    log("Defining moves...");
+    std::function<void(int)> playSmart = [&](int n) {
         CardGroup *hand = nullptr, *capturedPile = nullptr;
         int *scopaPoints = nullptr, *points = nullptr;
         game.sideOfTheTable(curTurn,hand,capturedPile,points,scopaPoints);
@@ -119,34 +130,46 @@ int main (int argc, char const* argv[])
         return result;
     };
     
-    std::cout << "Defining players..." << std::endl;
-    std::cout << "  Defining first player..." << std::endl;
+    log("Defining players...");
+    log("  Defining first player...");
     QLGameObject<Action,stateAlias> player = QLGameObject<Action,stateAlias>(atm,validActFun);
     player.setQlParameters(0.1,0.2);
-    // FIXME
-    //std::ifstream inPlayer(PLAYER_QLTABLE_FILENAME);
-    //if (inPlayer) { loadQLTable(player,inPlayer); }
-    //inPlayer.close();
+    std::ifstream inPlayer(PLAYER_QLTABLE_FILENAME);
+    if (inPlayer) {
+        log("   Loading player qlTable...");
+        loadQLTable(player,inPlayer);
+    }
+    inPlayer.close();
     
-    std::cout << "  Defining second player..." << std::endl;
+    
+    log("  Defining second player...");
     QLGameObject<Action,stateAlias> enemy  = QLGameObject<Action,stateAlias>(atm,validActFun);
     enemy.setQlParameters(0.1,0.2);
-    //std::ifstream inEnemy(ENEMY_QLTABLE_FILENAME);
-    //if (inEnemy) { enemy.loadQLTable(inEnemy); }
-    //inEnemy.close();
+    std::ifstream inEnemy(ENEMY_QLTABLE_FILENAME);
+    if (inEnemy) {
+        log("   Loading enemy qlTable...");
+        loadQLTable(enemy,inEnemy);
+    }
+    inEnemy.close();
+
 
     
     // main loop
-    std::cout << "Starting the simulation..." << std::endl;
+    log("Starting the simulation...");
     int matchTotalNum = atoi(argv[1]);
     for(int matchCounter = 0; matchCounter < matchTotalNum; ++matchCounter) {
-        if(matchCounter%10==0) {
-            std::cout << "Match number " << matchCounter << "..." << std::endl;
-            std::cout << "  Current score: P" << game.pointsPlayer << " E" << game.pointsEnemy << std::endl;
+        if(matchCounter % MATCH_COUNTER_STEP == 0) { log( ("Match number " + std::to_string(matchCounter) + "...").c_str() ); }
+        if(matchCounter % BACKUP_SAVE_STEP == 0) {
+            log("Saving backup...");
+            saveQLTable(player,PLAYER_QLTABLE_BACKUP_FILENAME);
+            saveQLTable(enemy,ENEMY_QLTABLE_BACKUP_FILENAME);
+            log("Backup done!");
         }
+        
         game.startMatch();
         
         while(!game.matchHasEnded()) {
+            
             QLGameObject<Action,stateAlias> *curPlayer, *otherPlayer;
             int *curLastScore, *otherLastScore, *curScore, *otherScore;
             switch(curTurn) {
@@ -172,26 +195,9 @@ int main (int argc, char const* argv[])
             int* trash;
             game.sideOfTheTable(curTurn,hand,capturePile,trash,trash);
             
-            //// ALERT!!! Here the QL algorithm can't choose what to do (it's a fault of this implementation; it mantains a low number of states but conflicts are bound to be solved by the main program)
-            // if there are more than 4 cards, set the current state to the best subtable there is
-            // if(game.table.cards.size() > 4)
-//             {
-//                 std::vector<std::vector<Card>> subtables = generateSubtables(game);
-//                 std::vector<Card> bestTable = *(subtables.begin());
-//                 float bestValue = curPlayer->stateValue(stateAlias(cardVecToInt(hand->cards),cardVecToInt(bestTable)));
-//                 for(std::vector<std::vector<Card>>::iterator subtableIt = subtables.begin(); subtableIt != subtables.end(); subtableIt++) {
-//                     stateAlias tmpState = stateAlias(cardVecToInt(hand->cards),cardVecToInt(*subtableIt));
-//                     float tmpValue = curPlayer->stateValue(tmpState);
-//                     if(tmpValue > bestValue) {
-//                         bestValue = tmpValue;
-//                         bestTable = *subtableIt;
-//                     }
-//                 }
-//                 curPlayer->overrideLastState(stateAlias(cardVecToInt(hand->cards),cardVecToInt(bestTable)));
-//             }
-            
             // do the best action; if more capture are possible, choose the one which gives the best future results
             curPlayer->doAction();
+            
             if(multipleChoice == true) {
                 std::vector<Scopa::captureType> captures = game.generateTableCaptures();
                 int bestValue = 0;
@@ -209,31 +215,30 @@ int main (int argc, char const* argv[])
             }
             
             // calculate reward and update
-            if(game.matchHasEnded()) { game.evaluateScore(); }
-            float reward = (otherScore - otherLastScore) * REWARD_WIN - (curScore - curLastScore) * REWARD_LOSE;
-            otherLastScore = otherScore;
-            otherPlayer->qlUpdate(stateAlias(cardVecToInt(hand->cards),cardVecToInt(game.table.cards)),reward);
-            
-            if(game.handPlayer.cards.size() == 0 && game.handEnemy.cards.size() == 0) {
-                std::cout << "  New hand!" << std::endl;
+            if(game.matchHasEnded()) {
+                game.evaluateScore();
+            }
+            else if(game.handPlayer.cards.size() == 0 && game.handEnemy.cards.size() == 0) {
                 game.dealHand(Scopa::PLAYER);
                 game.dealHand(Scopa::ENEMY);
             }
-            
+            float reward = (otherScore - otherLastScore) * REWARD_WIN - (curScore - curLastScore) * REWARD_LOSE;
+            otherLastScore = otherScore;
+            otherPlayer->qlUpdate(stateAlias(cardVecToInt(hand->cards),cardVecToInt(game.table.cards)),reward);
             
             curTurn = curTurn == Scopa::PLAYER? Scopa::ENEMY : Scopa::PLAYER;
         }
         
     }
     
-    std::cout << "Simulation ended!" << std::endl;
-    std::cout << "Saving qlTables..." << std::endl;
+    log("Simulation ended!");
+    log("Saving qlTables...");
     
     // save qlTables
     saveQLTable(player,PLAYER_QLTABLE_FILENAME);
     saveQLTable(enemy,ENEMY_QLTABLE_FILENAME);
     
-    std::cout << "All done!" << std::endl;
+    log("All done!");
     
     return 0;
 }
