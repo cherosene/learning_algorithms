@@ -6,12 +6,15 @@
 #include "Card.h"
 #include "CardGroup.h"
 #include "Scopa.h"
+#include "scopaStates.h"
 
 
 
 
 int main (int argc, char const* argv[])
 {
+    srand(clock());
+    
     std::pair<SDL_Window*,SDL_Renderer*> winRen = startSDL("Cards", Scopa::SCREEN_X, Scopa::SCREEN_Y, Scopa::SCREEN_WIDTH, Scopa::SCREEN_HEIGHT);
     SDL_Window* win = winRen.first;
     SDL_Renderer* ren = winRen.second;
@@ -126,9 +129,6 @@ int main (int argc, char const* argv[])
     }
     
     std::cout << "Partita finita!" << std::endl;
-    std::pair<int,int> score = game.evaluateScore();
-    std::cout << "Player: " << score.first << std::endl;
-    std::cout << "Enemy: " << score.second << std::endl;
     
     //// END TEST
     

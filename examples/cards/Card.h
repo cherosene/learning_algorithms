@@ -13,13 +13,13 @@ public:
     static const int CARD_WIDTH = 70;
     static const int CARD_HEIGHT = 100;
     
-    enum Suit {VOID, DENARI, BASTONI, SPADE, COPPE};
+    enum Suit {VOID, BASTONI, SPADE, COPPE, DENARI};
     typedef std::pair<Card::Suit,int> t;
     
     Suit suit;
     int value;
-    SDL_Texture* frontTex = nullptr;
-    SDL_Texture* backTex = nullptr;
+    SDL_Texture* frontTex;
+    SDL_Texture* backTex;
     
     int w;
     int h;

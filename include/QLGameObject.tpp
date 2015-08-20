@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 
 template <class T, class U>
 QLGameObject<T,U>::QLGameObject(std::map<T,std::function<void()>> atm, int nx, int ny, float nspeed) : GameObject<T>(atm, nx, ny, nspeed) {
@@ -51,7 +52,7 @@ void QLGameObject<T,U>::rinitQlTable(std::vector<U> nstates, float range) {
 
 template <class T, class U>
 void QLGameObject<T,U>::addState(U state, float range) {
-    std::vector<T> va = validActions(state);
+    std::vector<T> va = validActions();
     for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++) {
         qlTable[qlTableEntryType(*it,state)] = static_cast<float>(rand())/(static_cast<float>(RAND_MAX/range));
     }
@@ -59,6 +60,11 @@ void QLGameObject<T,U>::addState(U state, float range) {
 
 template <class T, class U>
 void QLGameObject<T,U>::setQlParameters(float lr, float df) { learningRate = lr; discountFactor = df; }
+
+template <class T, class U>
+void QLGameObject<T,U>::clearQLTable() {
+    qlTable.clear();
+}
 
 
 template <class T, class U>
@@ -102,10 +108,15 @@ std::vector<T> QLGameObject<T,U>::validActions() {
     return va;
 }
 
+template <class T, class U>
+std::vector<T> QLGameObject<T,U>::validActions(U state) {
+    return (*validationFun)(lastState);
+}
+
 
 template <class T, class U>
 float QLGameObject<T,U>::stateValue(U state) {
-    std::vector<T> va = this->validActions();
+    std::vector<T> va = this->validActions(state);
     
     float* m = nullptr;
     
@@ -125,6 +136,8 @@ float QLGameObject<T,U>::stateValue(U state) {
     
     if(!m) {
         // FIXME: throw exception
+        std::cout << "stateValue: variable m not initialized." << std::endl;
+        exit(-1);
     }
     return *m;
 }
@@ -137,6 +150,8 @@ void QLGameObject<T,U>::qlUpdate(U ns, float reward) {
     float ofv = qlTable[std::pair<T,U>(va[0],ns)];
     for(typename std::vector<T>::iterator it = va.begin(); it != va.end(); it++) { ofv = std::max(ofv,qlTable[std::pair<T,U>(*it,ns)]); }
     
+    // FIXME: addState used with no parameter reward
+    if(qlTable.find(lastAS) == qlTable.end()) { addState(lastState); }
     qlTable[lastAS] += learningRate * ( reward + discountFactor *  ofv - qlTable[lastAS] );
     lastState = ns;
     isQlTableUpToDate = true;

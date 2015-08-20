@@ -100,6 +100,7 @@ public:
     bool matchHasEnded();
     
     // create a vector containing all the possible captures
+    std::vector<captureType> generateTableCaptures(std::vector<Card> cardVec);
     std::vector<captureType> generateTableCaptures();
     int howManyChoice(Card card, std::vector<captureType> captures);
     bool hasMultipleChoice(Card card, std::vector<captureType> captures);

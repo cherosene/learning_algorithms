@@ -69,7 +69,7 @@ void Scopa::loadFakeDeck() {
 void Scopa::loadDeck() {
     
     // laod textures
-    std::string dirName = std::string("Nu-mamDeck/");
+    std::string dirName = std::string("examples/cards/Nu-mamDeck/");
 
     cardTex["c1"]    = loadTexture(dirName + std::string("001c.gif"), ren);
     cardTex["c2"]    = loadTexture(dirName + std::string("002c.gif"), ren);
@@ -132,7 +132,7 @@ void Scopa::loadDeck() {
     }
 }
 
-void Scopa::loadCursor() { cursorTex = loadTexture(std::string("images/hand_pointer2.png"), ren); }
+void Scopa::loadCursor() { cursorTex = loadTexture(std::string("examples/cards/images/hand_pointer2.png"), ren); }
 
 
 std::vector<Scopa::captureType> Scopa::filterByValue(std::vector<captureType> cVec, int value) {
@@ -163,6 +163,8 @@ void Scopa::setFocus(Who who) {
 void Scopa::setFocus(CardGroup cg) {
     if(cg.cards.size() == 0) {
         // FIXME: throw exception, focus on empty hand
+        std::cout << "set foucs failed" << std::endl;
+        exit(-1);
     }
     else { setFocus(cg,*cg.cards.begin()); }
 }
@@ -222,15 +224,18 @@ void Scopa::dealHand(Who who) {
     switch(who) {
         case PLAYER:
             deal(deck,handPlayer,3);
+            handPlayer.sort();
             break;
         case ENEMY:
             deal(deck,handEnemy,3);
+            handEnemy.sort();
             break;
     }
 }
 
 void Scopa::dealTable() {
     deal(deck,table,4);
+    table.sort();
 }
 
 void Scopa::startMatch() {
@@ -250,7 +255,6 @@ void Scopa::startMatch() {
 }
 
 void Scopa::evaluateScore() {
-    int pointsPlayer = scopaPointsPlayer, pointsEnemy = scopaPointsEnemy;
     if(lastCapture == PLAYER) { moveAll(table,capturedPilePlayer); }
     else { moveAll(table,capturedPileEnemy); }
     
@@ -261,8 +265,12 @@ void Scopa::evaluateScore() {
     }
     
     // number of cards
-    if(cardNumPlayer > cardNumEnemy) { pointsPlayer++; }
-    else if(cardNumPlayer < cardNumEnemy) { pointsEnemy++; }
+    if(cardNumPlayer > cardNumEnemy) {
+        pointsPlayer++;
+    }
+    else if(cardNumPlayer < cardNumEnemy) {
+        pointsEnemy++;
+    }
     
     // number of DENARI
     int denariPlayer = 0, denariEnemy = 0;
@@ -272,8 +280,12 @@ void Scopa::evaluateScore() {
     for(CardGroup::cardIterator it = capturedPileEnemy.cards.begin(); it != capturedPileEnemy.cards.end(); it++) {
         if(it->suit == Card::DENARI) { denariEnemy++; }
     }
-    if(denariPlayer > denariEnemy) { pointsPlayer++; }
-    else if(denariPlayer < denariEnemy) { pointsEnemy++; }
+    if(denariPlayer > denariEnemy) {
+        pointsPlayer++;
+    }
+    else if(denariPlayer < denariEnemy) {
+        pointsEnemy++;
+    }
     
     // primiera
     // FIXME: not implemented yet
@@ -312,11 +324,15 @@ bool Scopa::matchHasEnded() {
 
 
 std::vector<Scopa::captureType> Scopa::generateTableCaptures() {
+    return generateTableCaptures(table.cards);
+}
+
+std::vector<Scopa::captureType> Scopa::generateTableCaptures(std::vector<Card> cardVec) {
     std::vector<captureType> result, tmpVec;
     int sum;
     std::vector<Card> nvec;
         
-    for(CardGroup::cardIterator it1 = table.cards.begin(); it1 != table.cards.end(); it1++) {
+    for(CardGroup::cardIterator it1 = cardVec.begin(); it1 != cardVec.end(); it1++) {
         tmpVec.clear();
         for(std::vector<captureType>::iterator it2 = result.begin(); it2 != result.end(); it2++) {
             sum = it1->value + it2->first;
@@ -363,17 +379,22 @@ bool Scopa::playCard(Who who, Card card) {
     
     if(!hasCard(who,card)) {
         // FIXME: throw exception
+        std::cout << "playCard: no card like this in hand" << std::endl;
+        exit(-1);
     }
     
     std::vector<Scopa::captureType> tc = generateTableCaptures();
     std::vector<Card> capturedCards;
-    bool isSingleCard = false;
+    if(hasMultipleChoice(card,tc)) {
+        // FIXME: throw exception, multiple choice
+        std::cout << "playCard: multiple choice not allowed" << std::endl;
+        exit(-1);
+    }
     for(std::vector<Scopa::captureType>::iterator it = tc.begin(); it != tc.end(); it++) {
         if(it->first == card.value) {
-            if(capturedCards.empty() || (isSingleCard == false && it->second.size() == 1)) { capturedCards = it->second; }
-            else {
-                // FIXME: throw exception, multiple choice
-            }
+            //if(capturedCards.empty() || (isSingleCard == false && it->second.size() == 1)) { capturedCards = it->second; }
+            capturedCards = it->second;
+            break;
         }
     }
     
@@ -382,12 +403,18 @@ bool Scopa::playCard(Who who, Card card) {
     sideOfTheTable(who,hand,capturedPile,points,scopaPoints);
     if(capturedCards.size() == 0) {
         move(*hand,table,card);
+        hand->sort();
+        table.sort();
         return false;
     }
     else {
         lastCapture = who;
         move(*hand,*capturedPile,card);
-        for(std::vector<Card>::iterator it = capturedCards.begin(); it != capturedCards.end(); it++) { move(table,*capturedPile,*it); }
+        hand->sort();
+        for(std::vector<Card>::iterator it = capturedCards.begin(); it != capturedCards.end(); it++) {
+            move(table,*capturedPile,*it);
+        }
+        table.sort();
         if(table.cards.size() == 0) { (*points)++; (*scopaPoints)++; }
         return true;
     }
@@ -406,7 +433,11 @@ bool Scopa::playCard(Who who, Card card, std::vector<Card> capturedOnTable) {
     int *scopaPoints, *points;
     sideOfTheTable(who,hand,capturedPile,points,scopaPoints);
     move(*hand,*capturedPile,card);
-    for(std::vector<Card>::iterator it = capturedOnTable.begin(); it != capturedOnTable.end(); it++) { move(table,*capturedPile,*it); }
+    hand->sort();
+    for(std::vector<Card>::iterator it = capturedOnTable.begin(); it != capturedOnTable.end(); it++) {
+        move(table,*capturedPile,*it);
+    }
+    table.sort();
     if(table.cards.size() == 0) { (*points)++; (*scopaPoints)++; }
     lastCapture = who;
     return true;
@@ -419,6 +450,8 @@ void Scopa::playOnFocus(Who who) {
     
     if(!hand->mem(focus->second)) {
         // FIXME: throw exception
+        std::cout << "playOnFocus: no card like this in hand" << std::endl;
+        exit(-1);
     }
     
     playCard(who,focus->second);
@@ -433,6 +466,8 @@ void Scopa::playOnFocus(Who who, std::vector<Card> capturedOnTable) {
     
     if(!hand->mem(focus->second)) {
         // FIXME: throw exception
+        std::cout << "playOnFocus: no card like this in hand" << std::endl;
+        exit(-1);
     }
     
     playCard(who,focus->second,capturedOnTable);

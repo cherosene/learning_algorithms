@@ -45,6 +45,7 @@ public:
     friend void deal(CardGroup& from, CardGroup& to, int cardNum);
     
     void shuffle();
+    void sort();
     
     std::pair<int,int> cardCoordinates(Card card);
     void render();

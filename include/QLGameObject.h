@@ -43,6 +43,8 @@ public:
     void addState(U state, float range = 1.);
     // set the parameters for the qlearning algorithm (https://en.wikipedia.org/wiki/Q-learning)
     void setQlParameters(float lr, float df);
+    // delete content of qlTable
+    void clearQLTable();
     
     // override last state registered (used for the ql algorithm)
     void overrideLastState(U nstate);
@@ -53,6 +55,7 @@ public:
     T chooseAction(std::vector<T> permittedActions);
     // get a vector with the actions currently available to perform a move
     std::vector<T> validActions();
+    std::vector<T> validActions(U state);
     // evaluate the current value of a state (used for comparison between states)
     float stateValue(U state);
     // update qlTable and set new state

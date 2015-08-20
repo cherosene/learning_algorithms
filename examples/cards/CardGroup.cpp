@@ -75,8 +75,12 @@ void deal(CardGroup& from, CardGroup& to, int cardNum) {
 
 
 void CardGroup::shuffle() {
-    // FIXME: not so random, is deterministic
-    std::random_shuffle(cards.begin(), cards.end());
+    std::function<int(int)> myrandom = [](int i){return std::rand()%i;};
+    std::random_shuffle(cards.begin(), cards.end(), myrandom);
+}
+
+void CardGroup::sort() {
+    std::sort(cards.begin(),cards.end());
 }
 
 
