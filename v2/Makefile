@@ -2,7 +2,10 @@ CC = g++
 CFLAGS = -Wall --pedantic -g -O0 -std=c++11 -c
 LFLAGS = -Wall --pedantic -g -O0 -std=c++11
 
-QL_INCLUDE_DIR = -Iinclude
+INCLUDE_DIR = -Iinclude
+SOURCE_DIR	= src
+SOURCE_CPP	= $(wildcard $(SOURCE_DIR)/*.cpp)
+SOURCE_OBJ	= $(notdir $(SOURCE_CPP:.cpp=.o))
 
 SDL_INCLUDE = -I/Library/Frameworks/SDL2.framework/Headers -I/Library/Frameworks/SDL2_image.framework/Headers
 SDL_CFLAGS = $(CFLAGS) $(SDL_INCLUDE)
@@ -28,13 +31,14 @@ EXE = test $(RPS_EXE) $(CARDS_HVSH_EXE) $(CARDS_SCOPA_GAME_EXE)
 
 .PHONY: all
 
-all: $(CARDS_SCOPA_GAME_EXE)
+all: test
 	
 test:
-	$(CC) $(LFLAGS) $(QL_INCLUDE_DIR) test.cpp -o test
+	$(CC) $(CFLAGS) $(INCLUDE_DIR) $(SOURCE_CPP)
+	$(CC) $(LFLAGS) $(INCLUDE_DIR) $(SOURCE_OBJ) test.cpp -o test
 
 $(RPS_EXE):
-	$(CC) $(LFLAGS) $(QL_INCLUDE_DIR) $(RPS) -o $(RPS_EXE)
+	$(CC) $(LFLAGS) $(INCLUDE_DIR) $(RPS) -o $(RPS_EXE)
 	
 $(CARDS_HVSH_EXE):
 	$(CC) $(SDL_CFLAGS) $(CARDS_INCLUDE_DIR) $(CARDS_CPP)
@@ -43,11 +47,11 @@ $(CARDS_HVSH_EXE):
 	
 $(CARDS_SCOPA_GAME_EXE):
 	$(CC) $(SDL_CFLAGS) $(CARDS_INCLUDE_DIR) $(CARDS_CPP)
-	$(CC) $(SDL_LFLAGS) $(QL_INCLUDE_DIR) $(CARDS_INCLUDE_DIR) $(CARDS_OBJ) $(CARDS_SCOPA_GAME) -o $(CARDS_SCOPA_GAME_EXE)
+	$(CC) $(SDL_LFLAGS) $(INCLUDE_DIR) $(CARDS_INCLUDE_DIR) $(CARDS_OBJ) $(CARDS_SCOPA_GAME) -o $(CARDS_SCOPA_GAME_EXE)
 	$(MAKE) almostclean
 	
 almostclean:
 	rm -rf *.o *.dSYM
 	
-clean:
+clean: almostclean
 	rm -f $(EXE)
