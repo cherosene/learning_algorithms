@@ -1,11 +1,18 @@
 #include "LinearNeuralNetwork.h"
 #include "LinearNeuralNetworkException.h"
 
+#include <cstdlib>
+#include <iostream>
+
+
 LinearNeuralNetwork::LinearNeuralNetwork(float alpha, std::vector<unsigned int> descriptor, std::function<float(float)> af, std::function<float(float)> afD) : alpha(alpha) {
     if(descriptor.size() == 0) {
         throw LinearNeuralNetworkException(LinearNeuralNetworkException::DESCRIPTOR_EMPTY);
     }
     layerNumber = descriptor.size();
+    
+    // random initialization
+    srand (static_cast <unsigned> (clock()));
     
     // input layer - layer 0
     neurons.push_back( std::vector<Neuron>() );
@@ -25,7 +32,8 @@ LinearNeuralNetwork::LinearNeuralNetwork(float alpha, std::vector<unsigned int> 
         axons.push_back( std::vector<Axon>() );
         for(size_t sourcePos = 0; sourcePos < neurons[layer-1].size(); ++sourcePos) {
             for(size_t targetPos = 0; targetPos < neurons[layer].size(); ++targetPos) {
-                axons[layer-1].push_back( Axon(INITIAL_WEIGHT,neurons[layer-1][sourcePos],neurons[layer][targetPos]) );
+                float r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/MAX_INITIAL_WEIGHT));
+                axons[layer-1].push_back( Axon(r,neurons[layer-1][sourcePos],neurons[layer][targetPos]) );
             }
         }
         
@@ -60,21 +68,38 @@ std::vector<float> LinearNeuralNetwork::out(std::vector<float> inVector) {
 void LinearNeuralNetwork::learn(std::vector<float> errVector) {
     // TODO: gives segfault
     if( neurons[layerNumber-1].size() != errVector.size() ) { throw LinearNeuralNetworkException(LinearNeuralNetworkException::ERROR_LENGTH); }
+
+    // std::cout << "DEBUG MODE" << std::endl;
+//     std::cout << debug() << std::endl;
     
     // output layer
     for(size_t pos = 0; pos < neurons[layerNumber-1].size(); ++pos) {
         neurons[layerNumber-1][pos].err( errVector[pos] );
+        neurons[layerNumber-1][pos].learn();
+        // std::cout << neurons[layerNumber-1][pos].delta() << std::endl;
+//         std::cout << "input " << neurons[layerNumber-1][pos].inputValue << std::endl;
+//         std::cout << "accError " << neurons[layerNumber-1][pos].accumulatedError << std::endl;
+        neurons[layerNumber-1][pos].newRound();
     }
     
     // other layers
-    for(size_t layer = layerNumber; layer-- > 0 ; ) {
+    for(size_t layer = layerNumber-1; layer-- > 0 ; ) {
         for(size_t pos = 0; pos < axons[layer].size(); ++pos) {
             axons[layer][pos].giveErr();
+        }
+        for(size_t pos = 0; pos < neurons[layer].size(); ++pos) {
+            neurons[layer][pos].learn();
+            // std::cout << neurons[layer][pos].delta() << std::endl;
+//             std::cout << "input " << neurons[layer][pos].inputValue << " " << neurons[layer][pos].afD( neurons[layer][pos].inputValue ) << " " << Neuron::SIGMOID_DER( neurons[layer][pos].inputValue ) << std::endl;
+//             std::cout << "accError " << neurons[layer][pos].accumulatedError << std::endl;
+            neurons[layer][pos].newRound();
         }
         for(size_t pos = 0; pos < axons[layer].size(); ++pos) {
             axons[layer][pos].update(alpha);
         }
     }
+    
+    // std::cout << debug() << std::endl;
 }
 
 

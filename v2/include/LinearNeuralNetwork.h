@@ -7,7 +7,7 @@
 class LinearNeuralNetwork {
     
 public:
-    constexpr static float INITIAL_WEIGHT = 1;
+    constexpr static float MAX_INITIAL_WEIGHT = 1;
     
 public:
     // TODO: I don't like thoose names; I have to change them

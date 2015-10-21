@@ -8,6 +8,7 @@
 class Neuron {
 
 public:
+    
     static const std::function<float(float)> SIGMOID;
     static const std::function<float(float)> SIGMOID_DER;
     
@@ -17,7 +18,7 @@ public:
     // neuron parameters
     std::function<float(float)> af;     // the activation function
     std::function<float(float)> afD;    // the derivative of the activation function
-private:
+    //private:
     static unsigned int idGenerator;    // the number used to generate the id of an entity
     bool isForwardPhase;
     float inputValue;                   // the input of the neuron
@@ -38,6 +39,7 @@ public:
     float   delta();
     
     void newRound();
+    void learn();
     
 private:
     // neuron methods

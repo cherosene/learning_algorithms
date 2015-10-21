@@ -10,7 +10,6 @@ const std::function<float(float)> Neuron::SIGMOID      = [](float r){
     float res = 1 + exp(-r);
     return 1/res;
 };
-
 const std::function<float(float)> Neuron::SIGMOID_DER  = [](float r){
     float res = 2 * ( cosh(r) + 1 );
     return 1/res;
@@ -53,12 +52,15 @@ float Neuron::delta() { return deltaValue; }
 
 
 void Neuron::newRound() {
-    computeDelta();
     
     inputValue          = 0;
     outputValue         = 0;
     accumulatedError    = 0;
     isForwardPhase      = true;
+}
+
+void Neuron::learn() {
+    computeDelta();
 }
 
 
