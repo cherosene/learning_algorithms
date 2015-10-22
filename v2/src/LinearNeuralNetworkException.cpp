@@ -1,10 +1,11 @@
 #include "LinearNeuralNetworkException.h"
 
 
-const char* const LinearNeuralNetworkException::Reason[3] = {
+const char* const LinearNeuralNetworkException::Reason[4] = {
     "The descriptor is empty.",
     "Wrong input length.",
-    "Wrong error vector length."
+    "Wrong error vector length.",
+    "The name used is too long."
 };
 
 

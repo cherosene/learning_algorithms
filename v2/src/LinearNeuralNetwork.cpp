@@ -1,8 +1,12 @@
+#include <fstream>
 #include "LinearNeuralNetwork.h"
 #include "LinearNeuralNetworkException.h"
 
 #include <cstdlib>
 #include <iostream>
+
+
+const unsigned int MAX_LENGTH_NAME = 10;
 
 
 LinearNeuralNetwork::LinearNeuralNetwork(float alpha, std::vector<unsigned int> descriptor, std::function<float(float)> af, std::function<float(float)> afD) : alpha(alpha) {
@@ -40,6 +44,44 @@ LinearNeuralNetwork::LinearNeuralNetwork(float alpha, std::vector<unsigned int> 
     }
 }
 
+// FIXME: this function expect a well formatted file; there are no controls!
+LinearNeuralNetwork::LinearNeuralNetwork(const char *filename, std::function<float(float)> af, std::function<float(float)> afD) {
+    std::ifstream inputFile;
+    inputFile.open(filename);
+    
+    // load name
+    char name[MAX_LENGTH_NAME];
+    for(size_t letter = 0; letter < MAX_LENGTH_NAME; ++letter) {
+        inputFile.read( name + letter, sizeof(char) );
+    }
+    std::cout << "Loading neural network: " << name << std::endl;
+    
+    // load alpha
+    inputFile.read( (char *)&(alpha), sizeof(float) );
+    
+    // load topology and create neurons
+    inputFile.read( (char *)&(layerNumber), sizeof(unsigned int) );
+    for(size_t layer = 0; layer < layerNumber; ++layer) {
+        neurons.push_back( std::vector<Neuron>() );
+        unsigned int layerLength;
+        inputFile.read( (char*)&(layerLength), sizeof(unsigned int) );
+        for(size_t i = 0; i < layerLength; ++i) { neurons[layer].push_back( Neuron(af,afD) ); }
+    }
+    
+    // create axons while loading weights
+    for(size_t layer = 1; layer < layerNumber; ++layer) {
+        axons.push_back( std::vector<Axon>() );
+        for(size_t sourcePos = 0; sourcePos < neurons[layer-1].size(); ++sourcePos) {
+            for(size_t targetPos = 0; targetPos < neurons[layer].size(); ++targetPos) {
+                float weight;
+                inputFile.read( (char*)&(weight), sizeof(float) );
+                axons[layer-1].push_back( Axon(weight,neurons[layer-1][sourcePos],neurons[layer][targetPos]) );
+            }
+        }
+    }
+    
+}
+
 
 std::vector<float> LinearNeuralNetwork::out(std::vector<float> inVector) {
     if( neurons[0].size() != inVector.size() ) { throw LinearNeuralNetworkException(LinearNeuralNetworkException::INPUT_LENGTH); }
@@ -66,19 +108,12 @@ std::vector<float> LinearNeuralNetwork::out(std::vector<float> inVector) {
 }
 
 void LinearNeuralNetwork::learn(std::vector<float> errVector) {
-    // TODO: gives segfault
     if( neurons[layerNumber-1].size() != errVector.size() ) { throw LinearNeuralNetworkException(LinearNeuralNetworkException::ERROR_LENGTH); }
-
-    // std::cout << "DEBUG MODE" << std::endl;
-//     std::cout << debug() << std::endl;
     
     // output layer
     for(size_t pos = 0; pos < neurons[layerNumber-1].size(); ++pos) {
         neurons[layerNumber-1][pos].err( errVector[pos] );
         neurons[layerNumber-1][pos].learn();
-        // std::cout << neurons[layerNumber-1][pos].delta() << std::endl;
-//         std::cout << "input " << neurons[layerNumber-1][pos].inputValue << std::endl;
-//         std::cout << "accError " << neurons[layerNumber-1][pos].accumulatedError << std::endl;
         neurons[layerNumber-1][pos].newRound();
     }
     
@@ -89,9 +124,6 @@ void LinearNeuralNetwork::learn(std::vector<float> errVector) {
         }
         for(size_t pos = 0; pos < neurons[layer].size(); ++pos) {
             neurons[layer][pos].learn();
-            // std::cout << neurons[layer][pos].delta() << std::endl;
-//             std::cout << "input " << neurons[layer][pos].inputValue << " " << neurons[layer][pos].afD( neurons[layer][pos].inputValue ) << " " << Neuron::SIGMOID_DER( neurons[layer][pos].inputValue ) << std::endl;
-//             std::cout << "accError " << neurons[layer][pos].accumulatedError << std::endl;
             neurons[layer][pos].newRound();
         }
         for(size_t pos = 0; pos < axons[layer].size(); ++pos) {
@@ -99,24 +131,38 @@ void LinearNeuralNetwork::learn(std::vector<float> errVector) {
         }
     }
     
-    // std::cout << debug() << std::endl;
 }
 
-
-
-
-
-std::string LinearNeuralNetwork::debug() {
-    std::string result = std::to_string( neurons[0].size() ) + "\n";
+void LinearNeuralNetwork::save(const char* filename, const char* name) {
+    unsigned int nameLength = strlen(name);
+    if( nameLength > MAX_LENGTH_NAME ) { throw LinearNeuralNetworkException(LinearNeuralNetworkException::SAVE_NAME_TOO_LONG); }
     
-    for(size_t layer = 0; layer < layerNumber-1; ++layer) {
-        result += "[ ";
-        
-        for(size_t i = 0; i < axons[layer].size(); ++i) {
-            result += "(" + std::to_string(i) + "," + std::to_string(axons[layer][i].weight) + ") ";
-        }
-        result += "]\n" + std::to_string( neurons[layer+1].size() ) + "\n";
+    std::ofstream outputFile;
+    outputFile.open(filename);
+    
+    // saving name of the neural network
+    outputFile.write( name, sizeof(char) * nameLength );
+    if( nameLength != MAX_LENGTH_NAME ) {
+        char zero = 0;
+        for(size_t i = 0; i < MAX_LENGTH_NAME - nameLength; ++i) { outputFile.write( &zero, sizeof(char) ); }
     }
     
-    return result;
+    // saving parameter alpha
+    outputFile.write( (char *)&(alpha), sizeof(float) );
+    
+    // saving topology
+    outputFile.write( (char *)&(layerNumber), sizeof(unsigned int) );
+    for(size_t layer = 0; layer < layerNumber; ++layer) {
+        unsigned int l = neurons[layer].size();
+        outputFile.write( (char *)&l, sizeof(size_t) );
+    }
+    
+    // saving axons weights
+    for(size_t layer = 0; layer < layerNumber-1; ++layer) {
+        for(size_t pos = 0; pos < axons[layer].size(); ++pos) {
+            outputFile.write( (char *)&(axons[layer][pos].weight), sizeof(float) );
+        }
+    }
 }
+
+

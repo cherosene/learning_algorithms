@@ -9,7 +9,8 @@ public:
 	enum errcode {
         DESCRIPTOR_EMPTY,
         INPUT_LENGTH,
-        ERROR_LENGTH
+        ERROR_LENGTH,
+        SAVE_NAME_TOO_LONG
     };
     
     errcode err;

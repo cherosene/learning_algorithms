@@ -19,12 +19,12 @@ public:
     
 public:
     LinearNeuralNetwork(float alpha, std::vector<unsigned int> descriptor, std::function<float(float)> af, std::function<float(float)> afD);
+    LinearNeuralNetwork(const char *filename, std::function<float(float)> af, std::function<float(float)> afD);
     
     std::vector<float> out(std::vector<float> inVector);
     void learn(std::vector<float> errVector);
     
-    // TODO: cancel this
-    std::string debug();
+    void save(const char* filename, const char* name);
     
 };
 

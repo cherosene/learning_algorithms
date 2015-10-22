@@ -27,15 +27,24 @@ CARDS_HVSH_EXE = $(notdir $(CARDS_HVSH:.cpp=))
 CARDS_SCOPA_GAME = $(CARDS_DIR)/scopaGame.cpp
 CARDS_SCOPA_GAME_EXE = $(notdir $(CARDS_SCOPA_GAME:.cpp=))
 
+PREY_DIR			= $(EXAMPLES_DIR)/prey
+PREY_INCLUDE_DIR	= -I$(PREY_DIR)/include
+PREY_SRC_DIR		= $(PREY_DIR)/src
+PREY_CPP			= $(wildcard $(PREY_SRC_DIR)/*.cpp)
+PREY_OBJ			= $(notdir $(PREY_CPP:.cpp=.o))
+PREY_MAIN			= $(PREY_DIR)/prey.cpp
+PREY_EXE			= $(notdir $(PREY_MAIN:.cpp=))
+PREY_TRAINING_MAIN	= $(PREY_DIR)/preyTraining.cpp
+PREY_TRAINING_EXE	= $(notdir $(PREY_TRAINING_MAIN:.cpp=))
+
 EXE = test $(RPS_EXE) $(CARDS_HVSH_EXE) $(CARDS_SCOPA_GAME_EXE)
 
-.PHONY: all
+.PHONY: all preyobj
 
 all: test
 	
-test:
-	$(CC) $(CFLAGS) $(INCLUDE_DIR) $(SOURCE_CPP)
-	$(CC) $(LFLAGS) $(INCLUDE_DIR) $(SOURCE_OBJ) test.cpp -o test
+test: preyobj
+	$(CC) $(SDL_LFLAGS) $(PREY_INCLUDE_DIR) $(INCLUDE_DIR) $(PREY_OBJ) $(SOURCE_OBJ) test.cpp -o test
 
 $(RPS_EXE):
 	$(CC) $(LFLAGS) $(INCLUDE_DIR) $(RPS) -o $(RPS_EXE)
@@ -50,8 +59,19 @@ $(CARDS_SCOPA_GAME_EXE):
 	$(CC) $(SDL_LFLAGS) $(INCLUDE_DIR) $(CARDS_INCLUDE_DIR) $(CARDS_OBJ) $(CARDS_SCOPA_GAME) -o $(CARDS_SCOPA_GAME_EXE)
 	$(MAKE) almostclean
 	
+preyobj:
+	$(CC) $(SDL_CFLAGS) $(PREY_INCLUDE_DIR) $(INCLUDE_DIR) $(PREY_CPP) $(SOURCE_CPP)
+	
+$(PREY_EXE): preyobj
+	$(CC) $(SDL_LFLAGS) $(PREY_INCLUDE_DIR) $(INCLUDE_DIR) $(PREY_OBJ) $(SOURCE_OBJ) $(PREY_MAIN) -o $(PREY_EXE)
+	
+$(PREY_TRAINING_EXE): preyobj
+	$(CC) $(SDL_LFLAGS) $(PREY_INCLUDE_DIR) $(INCLUDE_DIR) $(PREY_OBJ) $(SOURCE_OBJ) $(PREY_TRAINING_MAIN) -o $(PREY_TRAINING_EXE)
+	
 almostclean:
 	rm -rf *.o *.dSYM
 	
-clean: almostclean
+cleanexe:
 	rm -f $(EXE)
+	
+clean: almostclean cleanexe
