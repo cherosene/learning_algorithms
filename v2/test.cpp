@@ -17,9 +17,13 @@ int main() {
     
     LinearNeuralNetwork nn = LinearNeuralNetwork( 0.5, descriptor, Neuron::SIGMOID, Neuron::SIGMOID_DER );
     
+    nn.debug();
+    
     nn.save( "prova.nn", "ciccio" );
     
-    LinearNeuralNetwork n2 = LinearNeuralNetwork( "prova.nn", Neuron::SIGMOID, Neuron::SIGMOID_DER );
+    LinearNeuralNetwork nn2 = LinearNeuralNetwork( "prova.nn", Neuron::SIGMOID, Neuron::SIGMOID_DER );
+    
+    nn2.debug();
     
     
     return 0;

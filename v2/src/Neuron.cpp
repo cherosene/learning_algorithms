@@ -66,17 +66,17 @@ void Neuron::learn() {
 
 // neuron methods
 void Neuron::computeOutput() {
-    if(!isForwardPhase) {
-        throw NeuronException(id);
-    }
+    // if(!isForwardPhase) {
+//         throw NeuronException(id);
+//     }
     outputValue = af(inputValue);
     isForwardPhase = false;
 }
 
 void Neuron::computeDelta() {
-    if(isForwardPhase) {
-        throw NeuronException(id);
-    }
+    // if(isForwardPhase) {
+//         throw NeuronException(id);
+//     }
     
     deltaValue = afD(inputValue) * accumulatedError;
 }

@@ -25,6 +25,7 @@ public:
     void learn(std::vector<float> errVector);
     
     void save(const char* filename, const char* name);
+    void debug();
     
 };
 

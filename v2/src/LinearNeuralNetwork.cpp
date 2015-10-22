@@ -64,7 +64,7 @@ LinearNeuralNetwork::LinearNeuralNetwork(const char *filename, std::function<flo
     for(size_t layer = 0; layer < layerNumber; ++layer) {
         neurons.push_back( std::vector<Neuron>() );
         unsigned int layerLength;
-        inputFile.read( (char*)&(layerLength), sizeof(unsigned int) );
+        inputFile.read( (char *)&(layerLength), sizeof(unsigned int) );
         for(size_t i = 0; i < layerLength; ++i) { neurons[layer].push_back( Neuron(af,afD) ); }
     }
     
@@ -154,7 +154,7 @@ void LinearNeuralNetwork::save(const char* filename, const char* name) {
     outputFile.write( (char *)&(layerNumber), sizeof(unsigned int) );
     for(size_t layer = 0; layer < layerNumber; ++layer) {
         unsigned int l = neurons[layer].size();
-        outputFile.write( (char *)&l, sizeof(size_t) );
+        outputFile.write( (char *)&l, sizeof(unsigned int) );
     }
     
     // saving axons weights
@@ -166,3 +166,26 @@ void LinearNeuralNetwork::save(const char* filename, const char* name) {
 }
 
 
+void LinearNeuralNetwork::debug() {
+    // alpha
+    std::cout << "Alpha: " << alpha << std::endl;
+    
+    // number of layers
+    std::cout << "Number of layers: " << layerNumber << std::endl;
+    
+    // layers width
+    for(size_t layer = 0; layer < layerNumber; ++layer) {
+        std::cout << neurons[layer].size() << " ";
+    }
+    std::cout << std::endl;
+    
+    // weights
+    std::cout << "Weights: " << std::endl;
+    for(size_t layer = 0; layer < layerNumber-1; ++layer) {
+        for(size_t pos = 0; pos < axons[layer].size(); ++pos) {
+            std::cout << axons[layer][pos].weight << " ";
+        }
+        std::cout << "//" << std::endl;
+    }
+    std::cout << std::endl;
+}

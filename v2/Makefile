@@ -41,7 +41,7 @@ EXE = test $(RPS_EXE) $(CARDS_HVSH_EXE) $(CARDS_SCOPA_GAME_EXE)
 
 .PHONY: all preyobj
 
-all: test
+all: prey
 	
 test: preyobj
 	$(CC) $(SDL_LFLAGS) $(PREY_INCLUDE_DIR) $(INCLUDE_DIR) $(PREY_OBJ) $(SOURCE_OBJ) test.cpp -o test
