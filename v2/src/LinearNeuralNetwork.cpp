@@ -42,6 +42,14 @@ LinearNeuralNetwork::LinearNeuralNetwork(float alpha, std::vector<unsigned int> 
         }
         
     }
+    
+    // bias
+    for(size_t layer = 1; layer < layerNumber; ++layer) {
+        for(size_t pos = 0; pos < neurons[layer].size(); ++pos) {
+            float r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/MAX_INITIAL_WEIGHT));
+            bias.push_back( Axon(r, neurons[layer][pos]) );
+        }
+    }
 }
 
 // FIXME: this function expect a well formatted file; there are no controls!
@@ -80,11 +88,23 @@ LinearNeuralNetwork::LinearNeuralNetwork(const char *filename, std::function<flo
         }
     }
     
+    // create bias while loading weights
+    for(size_t layer = 1; layer < layerNumber; ++layer) {
+        for(size_t pos = 0; pos < neurons[layer].size(); ++pos) {
+            float weight;
+            inputFile.read( (char*)&(weight), sizeof(float) );
+            bias.push_back( Axon(weight, neurons[layer][pos]) );
+        }
+    }
+    
 }
 
 
 std::vector<float> LinearNeuralNetwork::out(std::vector<float> inVector) {
     if( neurons[0].size() != inVector.size() ) { throw LinearNeuralNetworkException(LinearNeuralNetworkException::INPUT_LENGTH); }
+    
+    // bias
+    for(size_t pos = 0; pos < bias.size(); ++pos) { bias[pos].giveOut(); }
     
     // input layer
     for(size_t pos = 0; pos < neurons[0].size(); ++pos) {
@@ -131,6 +151,9 @@ void LinearNeuralNetwork::learn(std::vector<float> errVector) {
         }
     }
     
+    // bias
+    for(size_t pos = 0; pos < bias.size(); ++pos) { bias[pos].update(alpha); }
+    
 }
 
 void LinearNeuralNetwork::save(const char* filename, const char* name) {
@@ -163,6 +186,9 @@ void LinearNeuralNetwork::save(const char* filename, const char* name) {
             outputFile.write( (char *)&(axons[layer][pos].weight), sizeof(float) );
         }
     }
+    
+    // saving bias weights
+    for(size_t pos = 0; pos < bias.size(); ++pos) { outputFile.write( (char *)&(bias[pos].weight), sizeof(float) ); }
 }
 
 
@@ -187,5 +213,9 @@ void LinearNeuralNetwork::debug() {
         }
         std::cout << "//" << std::endl;
     }
-    std::cout << std::endl;
+    
+    // bias
+    std::cout << "Bias: " << std::endl;
+    for(size_t pos = 0; pos < bias.size(); ++pos) { std::cout << bias[pos].weight << " "; }
+    std::cout << std::endl << std::endl;
 }

@@ -13,6 +13,7 @@ public:
     // TODO: I don't like thoose names; I have to change them
     std::vector<std::vector<Neuron>>    neurons;
     std::vector<std::vector<Axon>>      axons;
+    std::vector<Axon>                   bias;
     
     unsigned int layerNumber;
     float alpha;

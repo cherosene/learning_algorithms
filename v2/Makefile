@@ -36,12 +36,14 @@ PREY_MAIN			= $(PREY_DIR)/prey.cpp
 PREY_EXE			= $(notdir $(PREY_MAIN:.cpp=))
 PREY_TRAINING_MAIN	= $(PREY_DIR)/preyTraining.cpp
 PREY_TRAINING_EXE	= $(notdir $(PREY_TRAINING_MAIN:.cpp=))
+QL_PREY_MAIN		= $(PREY_DIR)/qlPrey.cpp
+QL_PREY_EXE			= $(notdir $(QL_PREY_MAIN:.cpp=))
 
 EXE = test $(RPS_EXE) $(CARDS_HVSH_EXE) $(CARDS_SCOPA_GAME_EXE)
 
 .PHONY: all preyobj
 
-all: prey
+all: qlPrey
 	
 test: preyobj
 	$(CC) $(SDL_LFLAGS) $(PREY_INCLUDE_DIR) $(INCLUDE_DIR) $(PREY_OBJ) $(SOURCE_OBJ) test.cpp -o test
@@ -67,6 +69,9 @@ $(PREY_EXE): preyobj
 	
 $(PREY_TRAINING_EXE): preyobj
 	$(CC) $(SDL_LFLAGS) $(PREY_INCLUDE_DIR) $(INCLUDE_DIR) $(PREY_OBJ) $(SOURCE_OBJ) $(PREY_TRAINING_MAIN) -o $(PREY_TRAINING_EXE)
+	
+$(QL_PREY_EXE): preyobj
+	$(CC) $(SDL_LFLAGS) $(PREY_INCLUDE_DIR) $(INCLUDE_DIR) $(PREY_OBJ) $(SOURCE_OBJ) $(QL_PREY_MAIN) -o $(QL_PREY_EXE)
 	
 almostclean:
 	rm -rf *.o *.dSYM
